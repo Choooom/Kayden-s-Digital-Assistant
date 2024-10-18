@@ -1,14 +1,13 @@
 package com.example.kaydensdigitalassistant
 
-import WindowLink
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -26,14 +25,14 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,7 +42,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
@@ -52,15 +50,16 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.kaydensdigitalassistant.data.ReceiptItem
+import com.example.kaydensdigitalassistant.data.ReceiptViewModel
 import com.example.kaydensdigitalassistant.ui.theme.BlueEnd
 import com.example.kaydensdigitalassistant.ui.theme.BlueStart
+import com.example.kaydensdigitalassistant.ui.theme.ButtonGreen
+import com.example.kaydensdigitalassistant.ui.theme.SkyBlue
 import com.example.kaydensdigitalassistant.ui.theme.dirtyWhite
-import kotlin.collections.addAll
 
 
 @Composable
@@ -73,15 +72,12 @@ fun GenerateReceipt(navController: NavController){
 
     var totalAmountDisplay = remember(totalAmount) {
         buildAnnotatedString {
-            append("Total Amount: ")
-
+            withStyle(style = SpanStyle(fontFamily = font_archivo_light, fontSize = 15.sp)){
+                append("Total Amount: ")
+            }
             withStyle(style = SpanStyle(
-                color = Color.Green,
-                shadow = Shadow(
-                    color = Color.Black,
-                    offset = Offset(2f, 2f),
-                    blurRadius = 1f
-                )
+                fontFamily = font_archivo_bold,
+                fontSize = 17.sp
             )) {
                 append(totalAmount.toString())
             }
@@ -117,28 +113,12 @@ fun GenerateReceipt(navController: NavController){
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.9f)
+                .fillMaxHeight(0.98f)
                 .clip(RoundedCornerShape(20.dp))
                 .background(Color.White)
                 .padding(top = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ){
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ){
-                Spacer(modifier = Modifier.weight(0.1f))
-                Text(
-                    text = "Total Amount: $totalAmount", // Directly use totalAmount in the text
-                    fontFamily = font_archivo,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    modifier = Modifier.padding(end = 50.dp),
-                    // Add a key to force recomposition
-                )
-            }
             Column(
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
@@ -164,28 +144,60 @@ fun GenerateReceipt(navController: NavController){
                     tint = BlueStart,
                 )
             }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .fillMaxHeight(0.8f)
+                    .padding(top = 5.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(SkyBlue),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Text(
+                    text = totalAmountDisplay,
+                    fontFamily = font_archivo,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    modifier = Modifier.padding(end = 5.dp)
+                )
+                Button(
+                    onClick = {
+
+                    },
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(0.5f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ButtonGreen
+                    ),
+                    shape = RoundedCornerShape(topStart = 0.dp, topEnd = 20.dp, bottomEnd = 20.dp, bottomStart = 0.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize()
+                                    .padding(0.dp),
+                       horizontalArrangement = Arrangement.Center,
+                       verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Proceed",
+                            fontFamily = font_notosans_bold,
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-fun ReceiptSection(onTotalAmountCalculated: (Double) -> Unit) {
-    val receiptItemsState = remember { mutableStateListOf<ReceiptItem>(
-    ) }
-
-    LaunchedEffect(Unit) {
-        receiptItemsState.addAll(listOf(
-            ReceiptItem("Red Horse 1000 ML (Mucho)", 640.0, 2.0),
-            ReceiptItem("Red Horse 500 ML", 630.0, 3.0),
-            ReceiptItem("RC Original Small 240 ML", 174.0, 0.5),
-            ReceiptItem("RC Lemon Small 240 ML", 174.0, 1.5),
-        ))
-        onTotalAmountCalculated(receiptItemsState.sumOf { it.price})
-    }
+fun ReceiptSection(receiptViewModel: ReceiptViewModel = viewModel(), onTotalAmountCalculated: (Double) -> Unit) {
+    val receiptItemsState = remember {receiptViewModel.receiptItemsState}
 
     val totalAmount by remember {
         derivedStateOf {
-            receiptItemsState.sumOf { it.price }
+            receiptViewModel.getTotalAmount()
         }
     }
 
@@ -201,7 +213,7 @@ fun ReceiptSection(onTotalAmountCalculated: (Double) -> Unit) {
     ) {
         itemsIndexed(receiptItemsState) { index, item ->
             ProductItem(item.name, item.amount, item.quantity, index) { indexToRemove ->
-                receiptItemsState.removeAt(indexToRemove)
+                receiptViewModel.removeReceiptItem(indexToRemove)
             }
         }
     }

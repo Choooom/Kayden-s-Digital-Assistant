@@ -8,6 +8,14 @@ val font_archivo = FontFamily(
     Font(R.font.archivo)
 )
 
+val font_archivo_bold = FontFamily(
+    Font(R.font.archivo_bold)
+)
+
+val font_archivo_light = FontFamily(
+    Font(R.font.archivo_light)
+)
+
 val font_quicksand = FontFamily(
     Font(R.font.quicksand)
 )

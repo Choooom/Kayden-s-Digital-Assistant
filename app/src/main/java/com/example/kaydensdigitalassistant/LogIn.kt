@@ -227,16 +227,6 @@ fun LogIn(modifier: Modifier, backgroundColor: Color, navController: NavControll
                         Text("LOGIN", color = Color.White, fontFamily = font_archivo)
                     }
                 }
-
-                Spacer(modifier = Modifier.height(100.dp))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                ){
-                    WindowLink(navController, "DON'T HAVE AN ACCOUNT?", "SIGN UP NOW", "home", 0, Color.Blue)
-                }
             }
         }
     }

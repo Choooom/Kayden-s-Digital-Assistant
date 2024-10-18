@@ -12,8 +12,11 @@ val Pink40 = Color(0xFF7D5260)
 
 val BlueStart = Color(0xFF64D1CA)
 val BlueEnd =Color(0xFF084A96)
+val SkyBlue = Color(0xFF2397FC)
 
 val errorMessageBackground = Color(0xFFF54260)
 val errorMessageBorder = Color(0xFFF70505)
 
 val dirtyWhite = Color(0xFFC9C8C5)
+
+val ButtonGreen = Color(0xFF01A65F)
