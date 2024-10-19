@@ -5,6 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -22,13 +26,18 @@ fun MainScreen() {
 
     // Use Column to manage layout
     Column(modifier = Modifier.fillMaxSize()) {
-        NavHost(navController = navController, startDestination = "receipt", modifier = Modifier.weight(1f)) {
+        NavHost(navController = navController, startDestination = "login", modifier = Modifier.weight(1f)) {
             composable("login") {
                 LogIn(
                     modifier = Modifier.padding(0.dp),
                     backgroundColor = Color.White,
                     navController = navController
                 )
+            }
+            composable("admin_login") {
+                Admin_LogIn(modifier = Modifier.padding(0.dp),
+                    backgroundColor = Color.White,
+                    navController = navController)
             }
             composable("home") {
                 HomeScreen(navController = navController)
@@ -42,7 +51,7 @@ fun MainScreen() {
         }
 
         // Add BottomNavBar at the bottom of the screen
-        if (currentRoute != "login") {
+        if (currentRoute != "login" && currentRoute != "admin_login") {
             BottomNavBar(navController = navController)
         }
     }

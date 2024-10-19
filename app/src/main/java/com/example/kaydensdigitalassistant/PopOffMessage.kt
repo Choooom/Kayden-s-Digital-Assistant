@@ -13,15 +13,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 
 @Composable
 fun PopOffMessage(
+    navController: NavController,
     message: String,
     onDismiss: () -> Unit
 ) {
@@ -31,11 +34,17 @@ fun PopOffMessage(
             .background(Color.Black.copy(alpha = 0.5f))
             .clickable(onClick = onDismiss)
     ) {
-        Box(
+        LaunchedEffect(Unit) {
+            kotlinx.coroutines.delay(5000)
+            onDismiss()
+        }
+        Row(
             modifier = Modifier
                 .align(Alignment.Center)
-                .background(Color.White, shape = MaterialTheme.shapes.small)
-                .padding(16.dp)
+                .clip(RoundedCornerShape(5.dp))
+                .background(Color.White.copy(alpha = 0.5f), shape = MaterialTheme.shapes.small)
+                .border(BorderStroke(2.dp, Color.White.copy(alpha = 0.8f)))
+                .padding(15.dp)
         ) {
             Text(text = message, color = Color.Black)
         }
