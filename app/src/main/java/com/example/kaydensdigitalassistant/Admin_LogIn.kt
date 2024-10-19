@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
@@ -75,7 +77,7 @@ import com.example.kaydensdigitalassistant.ui.theme.errorMessageBackground
 import com.example.kaydensdigitalassistant.ui.theme.errorMessageBorder
 
 @Composable
-fun LogIn(modifier: Modifier, backgroundColor: Color, navController: NavController){
+fun Admin_LogIn(modifier: Modifier, backgroundColor: Color, navController: NavController){
     var username: String by remember{
         mutableStateOf("")
     }
@@ -102,9 +104,6 @@ fun LogIn(modifier: Modifier, backgroundColor: Color, navController: NavControll
 
     var errorMessage by remember { mutableStateOf(false) }
 
-    var adminAttempt by remember { mutableStateOf(0)}
-    var adminAttemptMessage by remember{mutableStateOf(false)}
-
     val insets = WindowInsets.systemBars.asPaddingValues()
 
     Column(
@@ -117,33 +116,44 @@ fun LogIn(modifier: Modifier, backgroundColor: Color, navController: NavControll
         Box(modifier = Modifier.fillMaxSize())
         {
             Column(
-                  modifier = Modifier
-                      .align(Alignment.TopCenter)
-                      .fillMaxWidth()
-                      .fillMaxHeight(0.3f)
-                      .clip(RoundedCornerShape(bottomStart = 50.dp, bottomEnd = 50.dp))
-                      .background(
-                          Brush.linearGradient(colors = listOf(BlueStart, BlueEnd))
-                      )
-                      .padding(bottom = 50.dp),
-                  horizontalAlignment = Alignment.CenterHorizontally
-              ) {
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.3f)
+                    .clip(RoundedCornerShape(bottomStart = 50.dp, bottomEnd = 50.dp))
+                    .background(
+                        Brush.linearGradient(colors = listOf(BlueStart, BlueEnd))
+                    )
+                    .padding(bottom = 50.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 7.dp, top = 5.dp)
+                ){
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        modifier = Modifier
+                            .size(25.dp)
+                            .clickable{
+                                navController.navigate("login")
+                            }
+                    )
+                }
 
-                  Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(40.dp))
 
-                  Image(
-                      painter = painterResource(id = R.drawable.company_logo),
-                      contentDescription = "Kayden Trdg. Logo",
-                      modifier = Modifier
-                          .size(170.dp)
-                          .alpha(0.7f)
-                          .clickable {
-                              adminAttemptMessage = true
-                              adminAttempt++
-                          },
-                      contentScale = ContentScale.Crop
-                  )
-              }
+                Image(
+                    painter = painterResource(id = R.drawable.company_logo),
+                    contentDescription = "Kayden Trdg. Logo",
+                    modifier = Modifier
+                        .size(170.dp)
+                        .alpha(0.7f),
+                    contentScale = ContentScale.Crop
+                )
+            }
 
             Column(
                 modifier = Modifier
@@ -155,8 +165,8 @@ fun LogIn(modifier: Modifier, backgroundColor: Color, navController: NavControll
                     .background(backgroundColor)
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.account_group_outline),
-                    contentDescription = "Employee Icon",
+                    imageVector = Icons.Default.AccountCircle,
+                    contentDescription = "Admin Icon",
                     modifier = Modifier
                         .size(120.dp)
                         .padding(top = 20.dp)
@@ -164,7 +174,7 @@ fun LogIn(modifier: Modifier, backgroundColor: Color, navController: NavControll
                     tint = Color.Black
                 )
                 Text(
-                    text = "EMPLOYEE LOGIN",
+                    text = "ADMIN LOGIN",
                     fontFamily = font_archivo,
                     fontWeight = FontWeight.W100,
                     fontSize = 25.sp,
@@ -234,16 +244,6 @@ fun LogIn(modifier: Modifier, backgroundColor: Color, navController: NavControll
                 backgroundColor = errorMessageBackground,
                 backgroundBorder = errorMessageBorder
             )
-        }
-    }
-    if(adminAttemptMessage){
-        if(adminAttempt <= 5){
-            PopOffMessage(navController, "You are ${6 - adminAttempt} clicks away from being an Admin!", onDismiss = {adminAttemptMessage = false})
-        }
-        else{
-            adminAttemptMessage = false
-            adminAttempt = 0
-            navController.navigate("admin_login")
         }
     }
 }
