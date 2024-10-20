@@ -24,9 +24,8 @@ fun MainScreen() {
     val navBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry.value?.destination?.route
 
-    // Use Column to manage layout
     Column(modifier = Modifier.fillMaxSize()) {
-        NavHost(navController = navController, startDestination = "login", modifier = Modifier.weight(1f)) {
+        NavHost(navController = navController, startDestination = "receipt", modifier = Modifier.weight(1f)) {
             composable("login") {
                 LogIn(
                     modifier = Modifier.padding(0.dp),
@@ -46,11 +45,10 @@ fun MainScreen() {
                 GenerateReceipt(navController = navController)
             }
             composable("productList") {
-                ProductList(navController = navController)
+                ProductList(navController = navController){}
             }
         }
 
-        // Add BottomNavBar at the bottom of the screen
         if (currentRoute != "login" && currentRoute != "admin_login") {
             BottomNavBar(navController = navController)
         }

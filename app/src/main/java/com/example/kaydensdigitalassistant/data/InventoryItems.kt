@@ -1,8 +1,8 @@
 package com.example.kaydensdigitalassistant.data
 
-data class ReceiptItem(
+data class InventoryItems(
     val name:String,
     val type: String,
-    val amount:Double,
-    var quantity:Double,
+    val price:Double,
+    val stock:Double
 )
