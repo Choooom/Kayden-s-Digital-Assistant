@@ -17,6 +17,19 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.kaydensdigitalassistant.BottomNavBar
+import androidx.compose.runtime.LaunchedEffect
+
+object CustomerSelectionHelper {
+    var isCustomerSelected by mutableStateOf(false)
+
+    fun customerPickedCallback(resetSelection: Boolean = false) {
+        if (resetSelection) {
+            isCustomerSelected = false
+        } else {
+            isCustomerSelected = true
+        }
+    }
+}
 
 @Composable
 fun MainScreen() {
@@ -24,8 +37,11 @@ fun MainScreen() {
     val navBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry.value?.destination?.route
 
+    val isAdminLoggedIn = remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.fillMaxSize()) {
-        NavHost(navController = navController, startDestination = "receipt", modifier = Modifier.weight(1f)) {
+        NavHost(navController = navController, startDestination = "login", modifier = Modifier.weight(1f)) {
+
             composable("login") {
                 LogIn(
                     modifier = Modifier.padding(0.dp),
@@ -36,21 +52,48 @@ fun MainScreen() {
             composable("admin_login") {
                 Admin_LogIn(modifier = Modifier.padding(0.dp),
                     backgroundColor = Color.White,
-                    navController = navController)
+                    navController = navController,
+                    isAdminLoggedIn = isAdminLoggedIn)
             }
             composable("home") {
                 HomeScreen(navController = navController)
             }
             composable("receipt") {
-                GenerateReceipt(navController = navController)
+                    GenerateReceipt(
+                        navController = navController,
+                        )
+            }
+            composable("selectCustomer") {
+                SelectCustomer(
+                    navController = navController)
             }
             composable("productList") {
                 ProductList(navController = navController){}
             }
+            composable("salesTracking") {
+                SalesTracking(navController = navController)
+            }
+            composable("receiptPreview/{paymentOption}/{pricingOption}") { backStackEntry ->
+                val paymentOption = backStackEntry.arguments?.getString("paymentOption") ?: "Cash"
+                val pricingOption = backStackEntry.arguments?.getString("pricingOption") ?: "Regular"
+                ReceiptPreview(navController = navController, paymentOption, pricingOption)
+            }
+
+            composable("confirmReceipt"){
+                ConfirmPurchase(navController = navController, "")
+            }
+
+            composable("inventory"){
+                Inventory(navController = navController)
+            }
+
+            composable("addAccount"){
+                AddUserAccount(navController = navController)
+            }
         }
 
         if (currentRoute != "login" && currentRoute != "admin_login") {
-            BottomNavBar(navController = navController)
+            BottomNavBar(navController = navController, isAdminLoggedIn.value)
         }
     }
 }

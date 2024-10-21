@@ -4,5 +4,6 @@ data class InventoryItems(
     val name:String,
     val type: String,
     val price:Double,
-    val stock:Double
+    var stock:Double,
+    val discount:Double =  1.875
 )

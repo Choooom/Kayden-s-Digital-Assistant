@@ -43,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,7 +79,7 @@ import com.example.kaydensdigitalassistant.ui.theme.errorMessageBackground
 import com.example.kaydensdigitalassistant.ui.theme.errorMessageBorder
 
 @Composable
-fun Admin_LogIn(modifier: Modifier, backgroundColor: Color, navController: NavController){
+fun Admin_LogIn(modifier: Modifier, backgroundColor: Color, navController: NavController, isAdminLoggedIn: MutableState<Boolean>){
     var username: String by remember{
         mutableStateOf("")
     }
@@ -214,9 +215,9 @@ fun Admin_LogIn(modifier: Modifier, backgroundColor: Color, navController: NavCo
                     horizontalArrangement = Arrangement.Center
                 ){
                     Button(
-                        //baguhen nalang yan if statement later pag may database functionality na
                         onClick = {
                             if(username == "admin" && password == "admin"){
+                                isAdminLoggedIn.value = true
                                 navController.navigate("receipt")
                             }
                             else{

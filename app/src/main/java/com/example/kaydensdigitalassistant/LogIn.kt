@@ -203,10 +203,9 @@ fun LogIn(modifier: Modifier, backgroundColor: Color, navController: NavControll
                     horizontalArrangement = Arrangement.Center
                 ){
                     Button(
-                        //baguhen nalang yan if statement later pag may database functionality na
                         onClick = {
-                            if(username == "admin" && password == "admin"){
-                                navController.navigate("receipt")
+                            if(username == "employee" && password == "employee"){
+                                navController.navigate("selectCustomer")
                             }
                             else{
                                 errorMessage = !errorMessage
