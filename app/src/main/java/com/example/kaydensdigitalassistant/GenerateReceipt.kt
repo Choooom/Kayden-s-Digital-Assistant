@@ -27,8 +27,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -51,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.isEmpty
 import androidx.compose.ui.graphics.Brush
@@ -81,9 +84,7 @@ import kotlin.text.toDoubleOrNull
 
 
 @Composable
-fun GenerateReceipt(navController: NavController,
-                    customerPicked: () -> Unit,
-                    isCustomerSelected: Boolean) {
+fun GenerateReceipt(navController: NavController) {
     val insets = WindowInsets.systemBars.asPaddingValues()
 
     var isCustomerSelected by remember { mutableStateOf(false) }
@@ -111,10 +112,6 @@ fun GenerateReceipt(navController: NavController,
     var selectedPaymentOption by remember { mutableStateOf("Cash") }
     var selectedPricingOption by remember { mutableStateOf("Regular") }
 
-    LaunchedEffect(Unit) {
-        receiptViewModel.clearReceiptItems()
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -125,20 +122,16 @@ fun GenerateReceipt(navController: NavController,
                 )
             )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 20.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "RECEIPT",
-                fontFamily = font_archivo,
+        Row(modifier = Modifier.fillMaxWidth().padding(0.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically){
+            Text(text = "RECEIPT",
+                fontFamily = kanit_bold,
                 fontWeight = FontWeight.Bold,
                 fontSize = 30.sp,
-                color = Color.White
-            )
+                color = Color.White)
+            Spacer(modifier = Modifier.fillMaxWidth(0.26f))
+            Icon(painter = painterResource(id = R.drawable.face_man)
+                , contentDescription = "Profile",
+                modifier = Modifier.size(70.dp).padding(end = 15.dp).clickable {  },)
         }
 
         Column(
@@ -153,16 +146,21 @@ fun GenerateReceipt(navController: NavController,
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.05f)
-                    .padding(start = 40.dp),
+                    .fillMaxHeight(0.05f),
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ){
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Go Back",
+                    modifier = Modifier.clickable { navController.navigate("selectCustomer")}
+                )
+                Spacer(modifier = Modifier.width(20.dp))
                 CustomDropdownMenu(
                     options = listOf("Cash", "Gcash", "Consignment"),
                     selectedOption = selectedPaymentOption,
                     onOptionSelected = { selectedPaymentOption = it },
-                    placeholder = "Cass"
+                    placeholder = "Cass",
                 )
 
                 Spacer(modifier = Modifier.width(16.dp))
@@ -247,6 +245,7 @@ fun GenerateReceipt(navController: NavController,
             }
         }
     }
+
     if(receiptViewModel.showProductList){
         ProductList(navController, onClose = { receiptViewModel.showProductList = false })
     }

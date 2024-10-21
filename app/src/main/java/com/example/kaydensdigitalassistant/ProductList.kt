@@ -181,7 +181,8 @@ fun ProductList(navController: NavController, onClose : () -> Unit){
                     onValueChange = { searchQuery = it },
                     onSearch = {
 
-                    }
+                    },
+                    modifier = Modifier.border(1.dp, Color.Black, RoundedCornerShape(20.dp))
                 )
             }
             Column(modifier = Modifier.fillMaxSize()){
@@ -210,7 +211,6 @@ fun SearchBar(
         modifier = modifier
             .fillMaxWidth(0.7f)
             .height(35.dp)
-            .border(1.dp, Color.Black, RoundedCornerShape(20.dp))
             .padding(horizontal = 8.dp),
         value = value,
         onValueChange = onValueChange,

@@ -65,6 +65,9 @@ import com.example.kaydensdigitalassistant.ui.theme.ButtonGreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.graphics.Canvas
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -78,12 +81,16 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.Date
+import kotlin.random.Random
 
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ReceiptPreview(navController: NavController, paymentOption: String, pricingOption: String){
+    val insets = WindowInsets.systemBars.asPaddingValues()
     val viewModel = LocalReceiptViewModel.current
+    val customerDetail = LocalCustomerViewModel.current
+    val currentCustomer = customerDetail.currentCustomer.value
 
     println("Confirmed Receipt: ${viewModel.receiptItemsState}")
     var isConfirmed by remember{ mutableStateOf(false)}
@@ -91,6 +98,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(top = insets.calculateTopPadding())
             .background(Brush.horizontalGradient(colors = listOf(BlueStart, BlueEnd))),
         horizontalAlignment = Alignment.CenterHorizontally
     ){
@@ -108,7 +116,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back Button",
-                    modifier = Modifier.clickable { navController.navigate("receipt") }
+                    modifier = Modifier.clickable { navController.popBackStack() }
                 )
             }
             Text(
@@ -164,7 +172,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
                 append(CurrentDateTime() + "\n")
             }
             withStyle(style = SpanStyle(fontSize = 15.sp, fontWeight = FontWeight.Light)) {
-                append("Palmera, San Jose del Monte Bulacan\n")
+                append("${currentCustomer.address}, Palmera Bulacan\n")
             }
             withStyle(style = SpanStyle(fontSize = 15.sp)) {
                 append("•••••••••••••••••••••••••••••••••••••••••••••••\n")
@@ -218,7 +226,20 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
 
         val breakdown = buildAnnotatedString {
             withStyle(style = SpanStyle(fontSize = 17.sp)) {
-                append(viewModel.getTotalAmount().toString() + "\n")
+                val price = viewModel.getTotalAmount()
+                append(
+                    if (pricingOption != "Discounted") {
+                        price.toString()
+                    } else {
+                        val discount = price * (1.875 / 100)
+                        (price - discount).toString()
+                    } + "\n"
+                )
+            }
+            if(pricingOption == "Discounted"){
+                withStyle(style = SpanStyle(fontSize = 10.sp, fontWeight = FontWeight.Normal)) {
+                    append("(Discounted 1.875% off)")
+                }
             }
         }
 
@@ -410,10 +431,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
         }
         if(isConfirmed){
             ConfirmPurchase(navController, pricingOption)
-            navController.navigate("receipt") {
-                popUpTo("GenerateReceipt") { inclusive = true }
-            }
-            CustomerSelectionHelper.customerPickedCallback(resetSelection = true)
+            navController.navigate("selectCustomer")
             isConfirmed = false
         }
     }
@@ -433,17 +451,31 @@ fun ConfirmPurchase(navController: NavController, pricingOption: String) {
 
             salesViewModel.addSales(OrderDetails(
                 currentCustomerDetails.name,
-                currentCustomerDetails.area,
-                currentCustomerDetails.blockLot,
+                currentCustomerDetails.address,
+                currentCustomerDetails.contactNumber,
                 viewModel.getReceiptList(),
                 pricingOption,
-                viewModel.getTotalAmount()
+                viewModel.getTotalAmount(),
+                getCurrentTimeDate(),
+                Random.nextInt(10_000_000, 100_000_000)
             ))
+
+            viewModel.receiptItemsState.forEach { receiptItem ->
+                // Find matching product in productList
+                val product = viewModel.productList.find { it.name == receiptItem.name }
+                if (product != null) {
+                    // Reduce the stock of the product
+                    product.stock -= receiptItem.quantity // Assuming 'stock' is the property to reduce
+                }
+            }
+
             snapshotFlow { salesViewModel.salesList }
                 .collect { updatedSalesList ->
-                    println("Updated Daily Sales: $updatedSalesList")
+                    println("Updated Sales List: $updatedSalesList")
+                    println("Updated Sales List: ${updatedSalesList[0]}")
                 }
 
+            viewModel.clearReceiptItems()
             navController.navigate("receipt")
         }
     }

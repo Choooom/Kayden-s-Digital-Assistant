@@ -20,3 +20,8 @@ val errorMessageBorder = Color(0xFFF70505)
 val dirtyWhite = Color(0xFFC9C8C5)
 
 val ButtonGreen = Color(0xFF01A65F)
+
+val bookmark = Color(0xFFEECF38)
+
+val Orange = Color(0xFFFC7703)
+val Red = Color(0xFFFF0000)

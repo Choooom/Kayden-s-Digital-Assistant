@@ -37,10 +37,10 @@ fun MainScreen() {
     val navBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry.value?.destination?.route
 
-    var isCustomerSelected by remember { mutableStateOf(false) }
+    val isAdminLoggedIn = remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        NavHost(navController = navController, startDestination = "receipt", modifier = Modifier.weight(1f)) {
+        NavHost(navController = navController, startDestination = "login", modifier = Modifier.weight(1f)) {
 
             composable("login") {
                 LogIn(
@@ -52,29 +52,26 @@ fun MainScreen() {
             composable("admin_login") {
                 Admin_LogIn(modifier = Modifier.padding(0.dp),
                     backgroundColor = Color.White,
-                    navController = navController)
+                    navController = navController,
+                    isAdminLoggedIn = isAdminLoggedIn)
             }
             composable("home") {
                 HomeScreen(navController = navController)
             }
             composable("receipt") {
-                GenerateReceipt(
-                    navController = navController,
-                    customerPicked = CustomerSelectionHelper::customerPickedCallback,
-                    isCustomerSelected = CustomerSelectionHelper.isCustomerSelected
-                )
+                    GenerateReceipt(
+                        navController = navController,
+                        )
             }
             composable("selectCustomer") {
                 SelectCustomer(
-                    navController = navController,
-                    customerPicked = {
-                        CustomerSelectionHelper.customerPickedCallback()
-                        navController.popBackStack()
-                    }
-                )
+                    navController = navController)
             }
             composable("productList") {
                 ProductList(navController = navController){}
+            }
+            composable("salesTracking") {
+                SalesTracking(navController = navController)
             }
             composable("receiptPreview/{paymentOption}/{pricingOption}") { backStackEntry ->
                 val paymentOption = backStackEntry.arguments?.getString("paymentOption") ?: "Cash"
@@ -86,15 +83,17 @@ fun MainScreen() {
                 ConfirmPurchase(navController = navController, "")
             }
 
+            composable("inventory"){
+                Inventory(navController = navController)
+            }
+
+            composable("addAccount"){
+                AddUserAccount(navController = navController)
+            }
         }
 
         if (currentRoute != "login" && currentRoute != "admin_login") {
-            BottomNavBar(navController = navController)
-        }
-    }
-    LaunchedEffect(key1 = CustomerSelectionHelper.isCustomerSelected) {
-        if (!CustomerSelectionHelper.isCustomerSelected) {
-            navController.navigate("selectCustomer")
+            BottomNavBar(navController = navController, isAdminLoggedIn.value)
         }
     }
 }

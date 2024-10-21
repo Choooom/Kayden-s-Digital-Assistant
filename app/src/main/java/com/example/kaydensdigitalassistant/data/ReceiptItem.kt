@@ -5,4 +5,5 @@ data class ReceiptItem(
     val type: String,
     val amount:Double,
     var quantity:Double,
+    val price: Double = amount * quantity
 )

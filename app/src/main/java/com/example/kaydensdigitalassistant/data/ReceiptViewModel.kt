@@ -20,6 +20,8 @@ class ReceiptViewModel  : ViewModel() {
     var showProductList by mutableStateOf(false)
     var currentIndex by mutableStateOf(0)
 
+    var toClear by mutableStateOf(false)
+
     companion object {
         var isCustomerSelected by mutableStateOf(false)
 
@@ -35,24 +37,24 @@ class ReceiptViewModel  : ViewModel() {
     init {
         productList.addAll(listOf(
             // Beer
-            InventoryItems("Red Horse 1000 ML (Mucho)", "Beer", 640.0, 180.0),
+            InventoryItems("Red Horse 1000 ML (Mucho)", "Beer", 640.0, 100.0),
             InventoryItems("Red Horse 500 ML", "Beer", 628.0, 100.0),
-            InventoryItems("Red Horse 330 ML (Stallion)", "Beer", 945.0, 5.0),
-            InventoryItems("Pale Pilsen 1000 ML (Grande)", "Beer", 610.0, 20.0),
+            InventoryItems("Red Horse 330 ML (Stallion)", "Beer", 945.0, 11.0),
+            InventoryItems("Pale Pilsen 1000 ML (Grande)", "Beer", 610.0, 100.0),
             InventoryItems("Pale Pilsen 320 ML", "Beer", 880.0, 10.0),
-            InventoryItems("San Mig Light 330 ML", "BeerFlavored", 1035.0, 5.0),
-            InventoryItems("San Mig Apple 330 ML", "BeerFlavored", 860.0, 5.0),
+            InventoryItems("San Mig Light 330 ML", "BeerFlavored", 1035.0, 100.0),
+            InventoryItems("San Mig Apple 330 ML", "BeerFlavored", 860.0, 100.0),
             // Softdrink
-            InventoryItems("RC Original Small 240 ML", "Softdrink", 174.0, 85.0),
-            InventoryItems("RC Orange Small 240 ML", "Softdrink", 174.0, 25.5),
-            InventoryItems("RC Lemon Small 240 ML", "Softdrink", 174.0, 10.5),
-            InventoryItems("RC Root Beer Small 240 ML", "Softdrink", 174.0, 0.0),
-            InventoryItems("RC Mega Original 800 ML", "Softdrink", 260.0, 50.5),
-            InventoryItems("RC Mega Orange 800 ML", "Softdrink", 260.0, 20.5),
-            InventoryItems("RC Mega Lemon 800 ML", "Softdrink", 260.0, 3.0),
+            InventoryItems("RC Original Small 240 ML", "Softdrink", 174.0, 100.0),
+            InventoryItems("RC Orange Small 240 ML", "Softdrink", 174.0, 340.0),
+            InventoryItems("RC Lemon Small 240 ML", "Softdrink", 174.0, 60.0),
+            InventoryItems("RC Root Beer Small 240 ML", "Softdrink", 174.0, 100.0),
+            InventoryItems("RC Mega Original 800 ML", "Softdrink", 260.0, 40.0),
+            InventoryItems("RC Mega Orange 800 ML", "Softdrink", 260.0, 2.0),
+            InventoryItems("RC Mega Lemon 800 ML", "Softdrink", 260.0, 100.0),
             // Energy Drinks
-            InventoryItems("Cobra Original (Yellow) 240 ML", "Energy-Drink", 300.0, 20.5),
-            InventoryItems("Cobra Citrus (Green) 240 ML", "Energy-Drink", 300.0, 9.5),
+            InventoryItems("Cobra Original (Yellow) 240 ML", "Energy-Drink", 300.0, 10.0),
+            InventoryItems("Cobra Citrus (Green) 240 ML", "Energy-Drink", 300.0, 23.0),
         ))
 
         // Add an empty item initially
@@ -125,4 +127,19 @@ class ReceiptViewModel  : ViewModel() {
         receiptItemsState.add(ReceiptItem("", "", 0.0, 0.0))
     }
 
+    fun updateInventory(viewModel: ReceiptViewModel){
+        val inventory = viewModel.productList
+        val receipt = viewModel.receiptItemsState
+        println(receipt[1].name)
+
+        for (receiptItem in receipt) {
+
+            val matchingInventoryItem = inventory.firstOrNull { it.name == receiptItem.name }
+
+            matchingInventoryItem?.let {
+                it.stock -= receiptItem.quantity
+                println("Product: ${it.name}, Stock: ${it.stock}")
+            }
+        }
+    }
 }
