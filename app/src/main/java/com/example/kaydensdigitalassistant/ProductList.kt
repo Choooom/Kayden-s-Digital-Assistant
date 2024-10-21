@@ -65,15 +65,9 @@ import com.example.kaydensdigitalassistant.ui.theme.BlueEnd
 import com.example.kaydensdigitalassistant.ui.theme.BlueStart
 import com.example.kaydensdigitalassistant.ui.theme.dirtyWhite
 
-@Preview(showBackground = true)
-@Composable
-fun ProductListPreview() {
-    ProductList(navController = NavController(LocalContext.current)){}
-}
-
 @Composable
 fun ProductList(navController: NavController, onClose : () -> Unit){
-    val viewModel: ReceiptViewModel = viewModel()
+    val viewModel = LocalReceiptViewModel.current
 
     var selectedCategory by remember { mutableStateOf(mutableStateListOf(true, false, false, false)) }
     var searchQuery by remember { mutableStateOf("") }
@@ -271,7 +265,7 @@ fun SearchBar(
 
 @Composable
 fun ProductColumn(type: String) {
-    val receiptViewModel: ReceiptViewModel = viewModel()
+    val receiptViewModel = LocalReceiptViewModel.current
     val filteredList = receiptViewModel.productList.filter { it.type == type }
     val pairedList = filteredList.chunked(2) // Split into pairs
 
@@ -326,7 +320,7 @@ fun ProductColumn(type: String) {
 
 @Composable
 fun InventoryItem(name: String, type: String, price:Double, index: Int){
-    val viewModel: ReceiptViewModel = viewModel()
+    val viewModel = LocalReceiptViewModel.current
     Box(
         modifier = Modifier
             .fillMaxSize()

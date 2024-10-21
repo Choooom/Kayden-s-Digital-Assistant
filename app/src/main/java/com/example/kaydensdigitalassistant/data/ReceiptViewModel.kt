@@ -1,5 +1,7 @@
 package com.example.kaydensdigitalassistant.data
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -8,14 +10,27 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.room.util.copy
 import com.example.kaydensdigitalassistant.GenerateReceipt
+import com.example.kaydensdigitalassistant.LocalCustomerViewModel
 
 
-class ReceiptViewModel : ViewModel() {
-    val receiptItemsState: SnapshotStateList<ReceiptItem> = mutableStateListOf()
+class ReceiptViewModel  : ViewModel() {
+    var receiptItemsState = mutableStateListOf<ReceiptItem>()
     val productList = mutableStateListOf<InventoryItems>()
 
     var showProductList by mutableStateOf(false)
     var currentIndex by mutableStateOf(0)
+
+    companion object {
+        var isCustomerSelected by mutableStateOf(false)
+
+        fun customerPickedCallback(resetSelection: Boolean = false) {
+            if (resetSelection) {
+                isCustomerSelected = false
+            } else {
+                isCustomerSelected = true
+            }
+        }
+    }
 
     init {
         productList.addAll(listOf(
@@ -57,16 +72,14 @@ class ReceiptViewModel : ViewModel() {
     fun addQuantity(quantity: Double, index: Int) {
         if (index in receiptItemsState.indices) {
             receiptItemsState[index] = receiptItemsState[index].copy(quantity = quantity)
-            println(receiptItemsState[index].quantity)
-            println(getTotalAmount())
         }
+        println(getReceiptList())
     }
 
     fun subtractQuantity(quantity: Double, index: Int) {
         if (index in receiptItemsState.indices) {
             if (receiptItemsState[index].quantity >= quantity) {
                 receiptItemsState[index] = receiptItemsState[index].copy(quantity = quantity)
-                println(receiptItemsState[index].quantity)
             } else {
                 receiptItemsState[index] = receiptItemsState[index].copy(quantity = 0.0)
             }
@@ -78,7 +91,8 @@ class ReceiptViewModel : ViewModel() {
             val productItem = productList.find { it.name == product && it.type == type }
             if (productItem != null) {
                 val currentItem = receiptItemsState[currentIndex]
-                receiptItemsState[currentIndex] = currentItem.copy(
+                val newReceiptItemsState = receiptItemsState.toMutableList()
+                receiptItemsState[currentIndex] = receiptItemsState[currentIndex].copy(
                     name = productItem.name,
                     type = productItem.type,
                     amount = productItem.price,
@@ -86,6 +100,8 @@ class ReceiptViewModel : ViewModel() {
                 )
             }
         }
+        println(receiptItemsState[currentIndex])
+        println(getReceiptList())
     }
 
     fun getTotalAmount(): Double {
@@ -103,4 +119,10 @@ class ReceiptViewModel : ViewModel() {
     fun removeProductItem(index: Int) {
         receiptItemsState.removeAt(index)
     }
+
+    fun clearReceiptItems() {
+        receiptItemsState.clear()
+        receiptItemsState.add(ReceiptItem("", "", 0.0, 0.0))
+    }
+
 }

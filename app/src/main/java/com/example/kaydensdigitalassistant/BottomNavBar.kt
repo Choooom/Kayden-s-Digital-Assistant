@@ -13,6 +13,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -39,24 +40,31 @@ fun BottomNavBar(navController: NavController) {
         containerColor = Color.White,
         contentColor = Color.Blue
     ) {
-        val navBackStackEntry = navController.currentBackStackEntryAsState()
-        val currentRoute = navBackStackEntry.value?.destination?.route
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentRoute = navBackStackEntry?.destination?.route
+
+        LaunchedEffect(key1 = currentRoute) {  }
 
         bottomNavItems.forEach { item ->
+            val isSelected = when (item.route) {
+                "receipt" -> currentRoute?.startsWith(item.route) == true
+                else -> currentRoute == item.route
+            }
+
             NavigationBarItem(
                 icon = {
                     Icon(imageVector = item.icon,
                          contentDescription = item.title,
-                         tint = (if (currentRoute == item.route) Color.White else SkyBlue),
+                         tint = (if (isSelected) Color.White else SkyBlue),
                          modifier = Modifier
                              .size(30.dp)
                     )},
                 label = {
                     Text(item.title,
-                        color = if (currentRoute == item.route) Color.Black else Color.Gray,
+                        color = if (isSelected) Color.Black else Color.Gray,
                          fontFamily = font_notosans_bold
                     ) },
-                selected = currentRoute == item.route,
+                selected = isSelected,
                 onClick = {
                     if (currentRoute != item.route) {
                         navController.navigate(item.route) {

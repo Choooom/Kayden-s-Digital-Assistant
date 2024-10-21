@@ -31,6 +31,10 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
@@ -60,6 +64,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -76,10 +81,18 @@ import kotlin.text.toDoubleOrNull
 
 
 @Composable
-fun GenerateReceipt(navController: NavController) {
+fun GenerateReceipt(navController: NavController,
+                    customerPicked: () -> Unit,
+                    isCustomerSelected: Boolean) {
     val insets = WindowInsets.systemBars.asPaddingValues()
 
-    val receiptViewModel: ReceiptViewModel = viewModel()
+    var isCustomerSelected by remember { mutableStateOf(false) }
+
+    fun customerPickedCallback(){
+        isCustomerSelected = true
+    }
+
+    val receiptViewModel = LocalReceiptViewModel.current
 
     val totalAmount by rememberUpdatedState(newValue = receiptViewModel.receiptItemsState.sumOf { it.amount * it.quantity })
 
@@ -93,6 +106,13 @@ fun GenerateReceipt(navController: NavController) {
         )) {
             append(totalAmount.toString())
         }
+    }
+
+    var selectedPaymentOption by remember { mutableStateOf("Cash") }
+    var selectedPricingOption by remember { mutableStateOf("Regular") }
+
+    LaunchedEffect(Unit) {
+        receiptViewModel.clearReceiptItems()
     }
 
     Column(
@@ -127,14 +147,37 @@ fun GenerateReceipt(navController: NavController) {
                 .fillMaxHeight(0.98f)
                 .clip(RoundedCornerShape(20.dp))
                 .background(Color.White)
-                .padding(top = 20.dp),
+                .padding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.05f)
+                    .padding(start = 40.dp),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                CustomDropdownMenu(
+                    options = listOf("Cash", "Gcash", "Consignment"),
+                    selectedOption = selectedPaymentOption,
+                    onOptionSelected = { selectedPaymentOption = it },
+                    placeholder = "Cass"
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                CustomDropdownMenu(
+                    options = listOf("Regular", "Discounted"),
+                    selectedOption = selectedPricingOption,
+                    onOptionSelected = { selectedPricingOption = it },
+                    placeholder = "Regular"
+                )
+            }
             Column(
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
                     .fillMaxHeight(0.9f)
-                    .padding(top = 20.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .background(dirtyWhite),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -187,7 +230,11 @@ fun GenerateReceipt(navController: NavController) {
                     Row(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(0.dp),
+                            .padding(0.dp)
+                            .clickable {
+                                println(selectedPaymentOption)
+                                if (totalAmount != 0.0) navController.navigate("receiptPreview/$selectedPaymentOption/$selectedPricingOption")
+                            },
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -207,7 +254,8 @@ fun GenerateReceipt(navController: NavController) {
 
 
 @Composable
-fun ReceiptSection(navController: NavController, receiptViewModel: ReceiptViewModel = viewModel()) {
+fun ReceiptSection(navController: NavController) {
+    val receiptViewModel = LocalReceiptViewModel.current
     LazyColumn(
         modifier = Modifier
             .fillMaxWidth()
@@ -400,8 +448,7 @@ fun ProductItem(
                                         if (type != "Beer") {
                                             updatedQuantity -= 0.5
                                             onSubtractQuantity(updatedQuantity, index)
-                                        }
-                                        else {
+                                        } else {
                                             updatedQuantity -= 1.0
                                             onSubtractQuantity(updatedQuantity, index)
                                         }
@@ -434,14 +481,13 @@ fun ProductItem(
                                 .weight(0.9f)
                                 .clickable {
                                     var updatedQuantity = quantity
-                                     if (type != "Beer") {
-                                         updatedQuantity += 0.5
-                                         onAddQuantity(updatedQuantity, index)
-                                     }
-                                     else {
-                                         updatedQuantity += 1.0
-                                         onAddQuantity(updatedQuantity, index)
-                                     }
+                                    if (type != "Beer") {
+                                        updatedQuantity += 0.5
+                                        onAddQuantity(updatedQuantity, index)
+                                    } else {
+                                        updatedQuantity += 1.0
+                                        onAddQuantity(updatedQuantity, index)
+                                    }
                                 }
                                 .border(1.dp, Color.Black),
                             contentAlignment = Alignment.Center
@@ -494,4 +540,44 @@ fun ProductItem(
     }
 }
 
+@Composable
+fun CustomDropdownMenu(
+    options: List<String>,
+    selectedOption: String,
+    onOptionSelected: (String) -> Unit,
+    placeholder: String = "Select an option"
+) {
+    var expanded by remember { mutableStateOf(false) }
 
+    Box (
+        modifier = Modifier
+            .border(1.dp, Color.Black)
+            .height(20.dp)
+            .width(80.dp)
+            .padding(start = 5.dp)
+            .background(if(!expanded) Color.White else dirtyWhite)
+            .clickable { expanded = true },
+        contentAlignment = Alignment.CenterStart
+    ){
+        Text(
+            text = selectedOption.ifEmpty { placeholder },
+            fontFamily = font_notosans_bold,
+            fontSize = 10.sp,
+        )
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    onClick = {
+                        onOptionSelected(option)
+                        expanded = false
+                    },
+                    text = { Text(option) }
+                )
+            }
+        }
+    }
+}
