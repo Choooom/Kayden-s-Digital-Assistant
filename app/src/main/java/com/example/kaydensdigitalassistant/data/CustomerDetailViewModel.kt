@@ -24,8 +24,6 @@ class CustomerDetailViewModel: ViewModel() {
         }
     }
 
-    private val _customerDetailStateFlow = MutableStateFlow<CustomerDetail?>(null)
-    val customerDetailStateFlow: StateFlow<CustomerDetail?> = _customerDetailStateFlow.asStateFlow()
     var customerDetails = mutableStateListOf<CustomerDetail>()
     var currentCustomer = mutableStateOf(CustomerDetail("","", "", ""))
 

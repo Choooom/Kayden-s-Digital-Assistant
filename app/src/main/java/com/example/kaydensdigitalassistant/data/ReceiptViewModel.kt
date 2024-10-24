@@ -11,11 +11,13 @@ import androidx.lifecycle.ViewModel
 import androidx.room.util.copy
 import com.example.kaydensdigitalassistant.GenerateReceipt
 import com.example.kaydensdigitalassistant.LocalCustomerViewModel
+import com.example.kaydensdigitalassistant.LocalReceiptViewModel
 
 
 class ReceiptViewModel  : ViewModel() {
     var receiptItemsState = mutableStateListOf<ReceiptItem>()
     val productList = mutableStateListOf<InventoryItems>()
+    var customerPreference = mutableStateListOf<CustomerPreference>()
 
     var showProductList by mutableStateOf(false)
     var currentIndex by mutableStateOf(0)
@@ -56,15 +58,11 @@ class ReceiptViewModel  : ViewModel() {
             InventoryItems("Cobra Original (Yellow) 240 ML", "Energy-Drink", 300.0, 10.0),
             InventoryItems("Cobra Citrus (Green) 240 ML", "Energy-Drink", 300.0, 23.0),
         ))
-
-        // Add an empty item initially
-        receiptItemsState.add(
-            ReceiptItem("", "", 0.0, 0.0)
-        )
     }
 
-    fun addReceiptItem(item: ReceiptItem) {
-        receiptItemsState.add(item)
+    fun initializeReceiptItem(item: List<ReceiptItem>) {
+        receiptItemsState.clear()
+        receiptItemsState.addAll(item)
     }
 
     fun removeReceiptItem(index: Int) {
@@ -140,6 +138,41 @@ class ReceiptViewModel  : ViewModel() {
                 it.stock -= receiptItem.quantity
                 println("Product: ${it.name}, Stock: ${it.stock}")
             }
+        }
+    }
+
+    fun preferenceAvailable(customer: CustomerDetail): Boolean{
+        val existingCustomer = customerPreference.find {
+            it.customerDetails.name == customer.name
+        }
+
+        if(existingCustomer != null) return true
+        else return false
+    }
+
+    fun updateCustomerPreference(currentCustomer: CustomerDetail) {
+        val existingCustomer = customerPreference.find {
+            it.customerDetails.name == currentCustomer.name
+        }
+
+        if (existingCustomer != null) {
+            // Create a new list (deep copy) for orderPreference
+            val updatedPreference = existingCustomer.copy(orderPreference = receiptItemsState.toList())
+            val index = customerPreference.indexOf(existingCustomer)
+            if (index != -1) {
+                customerPreference[index] = updatedPreference
+            }
+            println("Customer name: ${customerPreference[0].customerDetails.name}")
+            println("Customer order detail: ${customerPreference[0].orderPreference}")
+        } else {
+            val newPreference = CustomerPreference(
+                customerDetails = currentCustomer,
+                // Create a new list (deep copy) for orderPreference
+                orderPreference = receiptItemsState.toList()
+            )
+            customerPreference.add(newPreference)
+            println("Customer name: ${customerPreference[0].customerDetails.name}")
+            println("Customer order detail: ${customerPreference[0].orderPreference}")
         }
     }
 }

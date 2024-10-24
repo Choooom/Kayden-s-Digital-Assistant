@@ -40,7 +40,7 @@ fun MainScreen() {
     val isAdminLoggedIn = remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        NavHost(navController = navController, startDestination = "login", modifier = Modifier.weight(1f)) {
+        NavHost(navController = navController, startDestination = "selectCustomer", modifier = Modifier.weight(1f)) {
 
             composable("login") {
                 LogIn(
