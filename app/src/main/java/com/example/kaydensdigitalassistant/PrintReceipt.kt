@@ -442,12 +442,13 @@ fun ConfirmPurchase(navController: NavController, pricingOption: String) {
     val viewModel = LocalReceiptViewModel.current
     val customerViewModel = LocalCustomerViewModel.current
     val salesViewModel = LocalSalesViewModel.current
-    val customerDetail by customerViewModel.customerDetailStateFlow.collectAsState()
 
     LaunchedEffect(key1 = customerViewModel.currentCustomer.value) {
         customerViewModel.currentCustomer.let {
 
             val currentCustomerDetails = customerViewModel.currentCustomer.value
+
+            viewModel.updateCustomerPreference(customerViewModel.currentCustomer.value)
 
             salesViewModel.addSales(OrderDetails(
                 currentCustomerDetails.name,

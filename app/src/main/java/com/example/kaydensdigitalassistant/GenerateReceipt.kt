@@ -255,6 +255,25 @@ fun GenerateReceipt(navController: NavController) {
 @Composable
 fun ReceiptSection(navController: NavController) {
     val receiptViewModel = LocalReceiptViewModel.current
+    val currentCustomer = LocalCustomerViewModel.current
+
+    println("State of Receipt: ${receiptViewModel.receiptItemsState.isEmpty()}")
+    println("Content of Receipt: ${receiptViewModel.receiptItemsState}")
+    LaunchedEffect(key1 = currentCustomer.currentCustomer.value) {
+        if (receiptViewModel.preferenceAvailable(currentCustomer.currentCustomer.value)) {
+            println(receiptViewModel.customerPreference[0].orderPreference)
+            val customerIndex = receiptViewModel.customerPreference.indexOf(
+                receiptViewModel.customerPreference.find {
+                    it.customerDetails.name == currentCustomer.currentCustomer.value.name
+                }
+            )
+
+            if (customerIndex != -1) {
+                receiptViewModel.initializeReceiptItem(receiptViewModel.customerPreference[customerIndex].orderPreference)
+            }
+        }
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxWidth()
@@ -262,6 +281,7 @@ fun ReceiptSection(navController: NavController) {
             .padding(top = 10.dp)
     ) {
         itemsIndexed(receiptViewModel.receiptItemsState) { index, item ->
+
             ProductItem(navController, item.name, receiptViewModel.getReceiptList()[index].amount, item.quantity, item.type, index,
                 { indexToRemove ->
                     receiptViewModel.removeReceiptItem(indexToRemove)
