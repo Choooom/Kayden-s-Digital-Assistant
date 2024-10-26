@@ -15,6 +15,8 @@ roomKtx = "2.6.1"
 material3Version = "1.3.0"
 foundationDesktop = "1.7.0"
 appcompat = "1.7.0"
+activity = "1.7.2"
+lifecycle = "2.6.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -38,6 +40,9 @@ compose = "androidx.compose.material:material:<version>"
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
 material3 = { module = "androidx.compose.material3:material3", version.ref = "material3Version" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+activity = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
+lifecycle-runtime = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
+lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

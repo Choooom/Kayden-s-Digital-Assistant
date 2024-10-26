@@ -1,5 +1,6 @@
 package com.example.kaydensdigitalassistant
 
+import PrintToThermalPrinter
 import android.app.Activity
 import android.content.Context
 import android.graphics.Bitmap
@@ -94,6 +95,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
 
     println("Confirmed Receipt: ${viewModel.receiptItemsState}")
     var isConfirmed by remember{ mutableStateOf(false)}
+    var print by remember{ mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -147,7 +149,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
                 modifier = Modifier
                     .size(40.dp)
                     .clickable {
-
+                        print = true
                     },
             )
 
@@ -429,6 +431,21 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
                 )
             }
         }
+
+        if(print){
+            PrintToThermalPrinter(
+                businessName = "KAYDEN",
+                employeeId = "#023578",
+                dateTime = getCurrentTimeDate(),
+                customerAddress = "${currentCustomer.address}, Palmera Bulacan",
+                paymentOption = paymentOption,
+                receiptItems = viewModel.receiptItemsState,
+                totalAmount = viewModel.getTotalAmount(),
+                pricingOption = pricingOption
+            )
+            print = false
+        }
+
         if(isConfirmed){
             ConfirmPurchase(navController, pricingOption)
             navController.navigate("selectCustomer")

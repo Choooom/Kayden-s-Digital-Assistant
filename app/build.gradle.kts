@@ -40,6 +40,10 @@ android {
 }
 
 dependencies {
+
+    implementation(libs.activity)
+    implementation(libs.lifecycle.runtime)
+    implementation(libs.lifecycle.viewmodel)
     //implementation to para sa navigation
     implementation(libs.navigation.compose)
 
