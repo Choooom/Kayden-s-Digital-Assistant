@@ -18,6 +18,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.kaydensdigitalassistant.BottomNavBar
 import androidx.compose.runtime.LaunchedEffect
+import androidx.navigation.NavController
 
 object CustomerSelectionHelper {
     var isCustomerSelected by mutableStateOf(false)
@@ -40,7 +41,7 @@ fun MainScreen() {
     val isAdminLoggedIn = remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        NavHost(navController = navController, startDestination = "selectCustomer", modifier = Modifier.weight(1f)) {
+        NavHost(navController = navController, startDestination = "receipt", modifier = Modifier.weight(1f)) {
 
             composable("login") {
                 LogIn(
@@ -89,6 +90,9 @@ fun MainScreen() {
 
             composable("addAccount"){
                 AddUserAccount(navController = navController)
+            }
+            composable("salesReport"){
+                PerDaySale(navController = navController)
             }
         }
 

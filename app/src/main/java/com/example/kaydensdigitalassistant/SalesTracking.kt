@@ -1,10 +1,10 @@
+@file:Suppress("UNREACHABLE_CODE")
+
 package com.example.kaydensdigitalassistant
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,22 +22,24 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -51,50 +53,63 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.kaydensdigitalassistant.data.ReceiptItem
 import com.example.kaydensdigitalassistant.ui.theme.BlueEnd
 import com.example.kaydensdigitalassistant.ui.theme.BlueStart
 import com.example.kaydensdigitalassistant.ui.theme.ButtonGreen
-import com.example.kaydensdigitalassistant.ui.theme.SkyBlue
 import com.example.kaydensdigitalassistant.ui.theme.bookmark
 import com.example.kaydensdigitalassistant.ui.theme.dirtyWhite
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @Composable
-fun SalesTracking(navController: NavController){
-    val salesList = LocalSalesViewModel.current
+fun SalesTracking(navController: NavController) {
+    val salesViewModel = LocalSalesViewModel.current
+    val salesList by salesViewModel.allSalesItems.observeAsState(emptyList())
+    val customerDetails by salesViewModel.customerDetail.observeAsState()
     val insets = WindowInsets.systemBars.asPaddingValues()
 
     var isReceiptExpanded by remember { mutableStateOf(false) }
-    var itemIndex by remember { mutableStateOf(0) }
+    var selectedOrderId by remember { mutableStateOf<Long?>(null) }
+    var isDropdownExpanded by remember { mutableStateOf(false) }
+    var selectedDate by remember { mutableStateOf(salesList.firstOrNull()?.dateDelivered ?: "Today") }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = insets.calculateTopPadding())
-            .background(
-                Brush.horizontalGradient(
-                    colors = listOf(BlueStart, BlueEnd)
-                )
-            ),
+            .background(Brush.horizontalGradient(colors = listOf(BlueStart, BlueEnd))),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
-    ){
-        Row(modifier = Modifier.fillMaxWidth().padding(0.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically){
-            Text(text = "SALES",
+    ) {
+        // Header section remains the same
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(0.dp),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "SALES",
                 fontFamily = kanit_bold,
                 fontWeight = FontWeight.Bold,
                 fontSize = 30.sp,
-                color = Color.White)
+                color = Color.White
+            )
             Spacer(modifier = Modifier.fillMaxWidth(0.28f))
-            Icon(painter = painterResource(id = R.drawable.face_man)
-                , contentDescription = "Profile",
-                modifier = Modifier.size(70.dp).padding(end = 15.dp).clickable {  },)
+            Icon(
+                painter = painterResource(id = R.drawable.face_man),
+                contentDescription = "Profile",
+                modifier = Modifier
+                    .size(70.dp)
+                    .padding(end = 15.dp)
+                    .clickable { }
+            )
         }
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -103,9 +118,10 @@ fun SalesTracking(navController: NavController){
                 .background(Color.White),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
-        ){
+        ) {
             Row(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .height(70.dp)
                     .drawBehind {
                         val borderSize = 2.dp.toPx()
@@ -118,20 +134,53 @@ fun SalesTracking(navController: NavController){
                     },
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.Bottom
-            ){
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(0.5f),
                     horizontalArrangement = Arrangement.Start,
                     verticalAlignment = Alignment.CenterVertically
-                ){
+                ) {
                     Text(text = "RECEIPT")
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(0.5f),
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
-                ){
-                    Text(text = "Today ⌄", fontWeight = FontWeight.Bold)
+                ) {
+                    Text(
+                        text = "$selectedDate ⌄",
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .clickable { isDropdownExpanded = true }
+                            .padding(8.dp)
+                    )
+
+                    DropdownMenu(
+                        expanded = isDropdownExpanded,
+                        onDismissRequest = { isDropdownExpanded = false }
+                    ) {
+                        val uniqueDates = salesList.map { it.dateDelivered }.distinct()
+
+                        uniqueDates.forEach { date ->
+                            DropdownMenuItem(
+                                onClick = {
+                                    selectedDate = date
+                                    salesViewModel.filterSalesByDate(date)
+                                    isDropdownExpanded = false
+                                },
+                                text = { Text(date) }
+                            )
+                        }
+
+                        DropdownMenuItem(
+                            onClick = {
+                                selectedDate = "All Sales"
+                                salesViewModel.filterSalesByDate(null)
+                                isDropdownExpanded = false
+                            },
+                            text = { Text("All Sales") }
+                        )
+                    }
                 }
             }
 
@@ -141,7 +190,7 @@ fun SalesTracking(navController: NavController){
                     .fillMaxHeight(0.99f)
                     .padding(top = 20.dp)
                     .clip(RoundedCornerShape(25.dp))
-                    .background(dirtyWhite),
+                    .background(dirtyWhite)
             ) {
                 LazyColumn(
                     modifier = Modifier
@@ -150,39 +199,49 @@ fun SalesTracking(navController: NavController){
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Top
                 ) {
-                    itemsIndexed(salesList.salesList) { index, item ->
-                        if(index == 0) Spacer(modifier = Modifier.height(20.dp))
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
+                    items(salesList) { salesItem ->
                         SalesItem(
-                            navController,
-                            item.customerName,
-                            item.customerArea,
-                            item.orderNumber,
-                            item.timeDelivered,
-                            item.orderBreakdown
-                        ){
-                            itemIndex = index
-                            isReceiptExpanded = !isReceiptExpanded
+                            navController = navController,
+                            name = customerDetails?.name ?: "Unknown Customer",
+                            address = customerDetails?.address ?: "Unknown Address",
+                            orderNumber = salesItem.salesId,
+                            date = salesItem.timeDelivered,
+                            orderBreakdown = salesItem.orderDetails
+                        ) {
+                            selectedOrderId = salesItem.salesId
+                            isReceiptExpanded = true
                         }
                     }
                 }
             }
         }
     }
+
     if (isReceiptExpanded) {
-        ReceiptDetails(itemIndex) {
+        ReceiptDetails(selectedOrderId) {
             isReceiptExpanded = false
         }
     }
+}
+
+private fun getDateMinusDays(daysToSubtract: Int): String {
+    val calendar = Calendar.getInstance()
+    calendar.add(Calendar.DAY_OF_YEAR, -daysToSubtract)
+    val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+    return dateFormat.format(calendar.time)
+}
+
+// Helper function to get current date
+private fun getCurrentDates(): String {
+    val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+    return dateFormat.format(Calendar.getInstance().time)
 }
 
 @Composable
 fun SalesItem(navController: NavController,
               name: String,
               address: String,
-              orderNumber: Int,
+              orderNumber: Long,
               date: String,
               orderBreakdown: List<ReceiptItem>,
               onItemClick: () -> Unit) {
@@ -279,10 +338,17 @@ fun SalesItem(navController: NavController,
 }
 
 @Composable
-fun ReceiptDetails(index: Int, onClose: () -> Unit){
+fun ReceiptDetails(orderId: Long?, onClose: () -> Unit){
     val salesViewModel = LocalSalesViewModel.current
-    val salesList = salesViewModel.salesList[index].orderBreakdown
+    val selectedSalesItem by salesViewModel.selectedSalesItem.observeAsState()
+    val customerDetail by salesViewModel.customerDetail.observeAsState()
     val insets = WindowInsets.systemBars.asPaddingValues()
+
+    LaunchedEffect(orderId) {
+        orderId?.let {
+            salesViewModel.fetchSalesById(it)
+        }
+    }
 
     Column(modifier = Modifier.fillMaxWidth().fillMaxHeight().padding(top = insets.calculateTopPadding())
         .background(Brush.horizontalGradient(listOf(BlueStart, BlueEnd))),
@@ -327,7 +393,7 @@ fun ReceiptDetails(index: Int, onClose: () -> Unit){
             Row(modifier = Modifier.fillMaxWidth()
                 .padding(start = 20.dp, top = 10.dp), horizontalArrangement = Arrangement.Start)
             {
-                val orderNumber = salesViewModel.salesList[index].orderNumber
+                val orderNumber = selectedSalesItem?.salesId ?: 0
                 Text(text = "#$orderNumber",
                     fontFamily = font_notosans_regular,
                     fontSize = 20.sp,
@@ -336,7 +402,7 @@ fun ReceiptDetails(index: Int, onClose: () -> Unit){
             Row(modifier = Modifier.fillMaxWidth()
                 .padding(start = 20.dp, top = 10.dp), horizontalArrangement = Arrangement.Start)
             {
-                val dateDelivered = salesViewModel.salesList[index].timeDelivered
+                val dateDelivered = selectedSalesItem?.dateDelivered
                 Text(text = "$dateDelivered",
                     fontFamily = font_notosans_regular,
                     fontSize = 15.sp,)
@@ -395,7 +461,7 @@ fun ReceiptDetails(index: Int, onClose: () -> Unit){
                     Spacer(modifier = Modifier.width(5.dp))
                     Text("Deliver Location", fontFamily = font_notosans_bold, fontSize = 15.sp)
                 }
-                Text(salesViewModel.salesList[index].customerArea, fontFamily = font_notosans_bold, fontSize = 12.sp,
+                Text(customerDetail?.address ?: "", fontFamily = font_notosans_bold, fontSize = 12.sp,
                     modifier = Modifier.padding(start = 40.dp))
             }
 
@@ -416,8 +482,8 @@ fun ReceiptDetails(index: Int, onClose: () -> Unit){
                         horizontalAlignment = Alignment.Start,
                         verticalArrangement = Arrangement.Center
                     ){
-                        Text(text = salesViewModel.salesList[index].customerName, fontFamily = font_notosans_bold, fontSize = 15.sp)
-                        Text(text = salesViewModel.salesList[index].contactNumber, fontFamily = font_notosans_bold, fontSize = 12.sp)
+                        Text(text = customerDetail?.name ?: "", fontFamily = font_notosans_bold, fontSize = 15.sp)
+                        Text(text = customerDetail?.contactNumber ?: "", fontFamily = font_notosans_bold, fontSize = 12.sp)
                     }
                 }
                 Column(
@@ -427,9 +493,9 @@ fun ReceiptDetails(index: Int, onClose: () -> Unit){
                     verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.End
                 ){
-                    OrderDetails(salesList)
+                    OrderDetails(selectedSalesItem?.orderDetails ?: emptyList())
 
-                    val getTotal = salesViewModel.salesList[index].orderBreakdown.sumOf { it.amount * it.quantity }
+                    val getTotal = selectedSalesItem?.totalAmount ?: 0.0
 
                     Text(text = "Total: ₱${getTotal}", fontFamily = font_notosans_bold, fontSize = 13.sp, modifier = Modifier.padding(end = 20.dp, top = 5.dp))
                 }
@@ -449,7 +515,7 @@ fun OrderDetails(orderList: List<ReceiptItem>) {
             .clip(RoundedCornerShape(5.dp))
             .background(dirtyWhite)
     ) {
-        itemsIndexed(orderList) { index, item ->
+        items(orderList) { item ->
             ReceiptItem(item.name,
                 item.amount, item.quantity
             )

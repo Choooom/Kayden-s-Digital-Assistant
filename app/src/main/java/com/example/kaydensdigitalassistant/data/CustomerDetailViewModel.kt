@@ -1,55 +1,82 @@
 package com.example.kaydensdigitalassistant.data
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
+import android.app.Application
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
-import com.example.kaydensdigitalassistant.LocalCustomerViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.launch
 
-class CustomerDetailViewModel: ViewModel() {
+class CustomerDetailViewModel(private val repository: CustomerRepository) : ViewModel() {
+    private val _sortOrder = MutableStateFlow(SortOrder.NONE)
+    val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
 
-    companion object {
-        var isCustomerSelected by mutableStateOf(false)
+    var currentCustomer = mutableStateOf(CustomerDetail(name = "", contactNumber = "", address = ""))
 
-        fun customerPickedCallback(resetSelection: Boolean = false) {
-            if (resetSelection) {
-                isCustomerSelected = false
-            } else {
-                isCustomerSelected = true
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    val customerDetails = combine(
+        _sortOrder,
+        _searchQuery
+    ) { sortOrder, query ->
+        when {
+            query.isNotEmpty() -> repository.searchCustomers(query)
+            sortOrder == SortOrder.BY_NAME -> repository.getCustomersSortedByName()
+            sortOrder == SortOrder.BY_ADDRESS -> repository.getCustomersSortedByAddress()
+            else -> repository.allCustomers
+        }
+    }.flatMapLatest { it }
+
+    fun setSortOrder(order: SortOrder) {
+        _sortOrder.value = order
+    }
+
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun insertCustomer(customer: CustomerDetail) = viewModelScope.launch {
+        repository.insertCustomer(customer)
+        currentCustomer.value = customer
+    }
+
+    enum class SortOrder {
+        NONE,
+        BY_NAME,
+        BY_ADDRESS
+    }
+
+    class CustomerDetailViewModelFactory(private val repository: CustomerRepository) : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(CustomerDetailViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return CustomerDetailViewModel(repository) as T
             }
+            throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
+}
 
-    var customerDetails = mutableStateListOf<CustomerDetail>()
-    var currentCustomer = mutableStateOf(CustomerDetail("","", "", ""))
+class CustomerRepository(private val customerDetailDao: CustomerDetailDao) {
+    val allCustomers: Flow<List<CustomerDetail>> = customerDetailDao.getAllCustomers()
 
-    init{
-        customerDetails.addAll(listOf(
-            CustomerDetail("Ate Ning","Female","Complex",  "092296726163", true),
-            CustomerDetail("Malou","Female","C2B", "093745864571", true),
-            CustomerDetail("Ate Glo","Female","C4A",  "092296726163", true),
-            CustomerDetail("Boi Ilong","Male","Phase 7",  "092265126163", true),
-            CustomerDetail("Jenny Bunso", "Female","C5A",  "096520726163", true),
-            CustomerDetail("Dan","Male","Phase 7",  "097134926163", true),
-            CustomerDetail("Outpost","Female","Complex",  "0922689163", true),
-            CustomerDetail("Ate Ning","Female","Complex",  "09567566163", true)
-        ))
-    }
+    fun getCustomersSortedByName() = customerDetailDao.getCustomersSortedByName()
 
-    fun setCustomerDetail(customerDetail: CustomerDetail) {
-        currentCustomer.value = customerDetail
-        println("Current Customer: ${currentCustomer.value}")
-    }
+    fun getCustomersSortedByAddress() = customerDetailDao.getCustomersSortedByAddress()
 
-    fun addCustomerDetail(customerDetail: CustomerDetail) {
-        customerDetails.add(customerDetail)
-    }
+    fun searchCustomers(query: String) = customerDetailDao.searchCustomers(query)
 
-    fun getOldCustomerDetail(name: String): List<CustomerDetail> {
-        return customerDetails
+    suspend fun insertCustomer(customer: CustomerDetail): Long {
+        return customerDetailDao.insertCustomer(customer)
     }
 }

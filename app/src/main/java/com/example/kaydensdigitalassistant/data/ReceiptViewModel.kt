@@ -69,11 +69,16 @@ class ReceiptViewModel  : ViewModel() {
         receiptItemsState.removeAt(index)
     }
 
-    fun addQuantity(quantity: Double, index: Int) {
-        if (index in receiptItemsState.indices) {
-            receiptItemsState[index] = receiptItemsState[index].copy(quantity = quantity)
-        }
-        println(getReceiptList())
+    fun getTotalAmount(): Double {
+        return receiptItemsState.sumOf { it.amount * it.quantity }
+    }
+
+    fun addProductItem(item: ReceiptItem) {
+        receiptItemsState.add(item)
+    }
+
+    fun getReceiptList(): List<ReceiptItem> {
+        return receiptItemsState
     }
 
     fun subtractQuantity(quantity: Double, index: Int) {
@@ -104,25 +109,15 @@ class ReceiptViewModel  : ViewModel() {
         println(getReceiptList())
     }
 
-    fun getTotalAmount(): Double {
-        return receiptItemsState.sumOf { it.amount * it.quantity }
-    }
-
-    fun addProductItem(item: ReceiptItem) {
-        receiptItemsState.add(item)
-    }
-
-    fun getReceiptList(): List<ReceiptItem> {
-        return receiptItemsState
+    fun addQuantity(quantity: Double, index: Int) {
+        if (index in receiptItemsState.indices) {
+            receiptItemsState[index] = receiptItemsState[index].copy(quantity = quantity)
+        }
+        println(getReceiptList())
     }
 
     fun removeProductItem(index: Int) {
         receiptItemsState.removeAt(index)
-    }
-
-    fun clearReceiptItems() {
-        receiptItemsState.clear()
-        receiptItemsState.add(ReceiptItem("", "", 0.0, 0.0))
     }
 
     fun updateInventory(viewModel: ReceiptViewModel){

@@ -22,14 +22,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,6 +59,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.kaydensdigitalassistant.data.Products
+import com.example.kaydensdigitalassistant.data.ProductsViewModel
 import com.example.kaydensdigitalassistant.ui.theme.BlueEnd
 import com.example.kaydensdigitalassistant.ui.theme.BlueStart
 import com.example.kaydensdigitalassistant.ui.theme.ButtonGreen
@@ -60,13 +71,21 @@ import com.example.kaydensdigitalassistant.ui.theme.dirtyWhite
 
 
 @Composable
-fun Inventory(navController: NavController){
-    val inventory = LocalReceiptViewModel.current
-    val inventoryList = inventory.productList
-
+fun Inventory(navController: NavController) {
+    val productsViewModel = LocalProductsViewModel.current
+    val allProducts by productsViewModel.allProducts.observeAsState(initial = emptyList())
     val insets = WindowInsets.systemBars.asPaddingValues()
-    var itemType by remember{ mutableStateOf("Beer")}
+
+    var itemType by remember { mutableStateOf("Beer") }
     var searchQuery by remember { mutableStateOf("") }
+    var isTypeMenuExpanded by remember { mutableStateOf(false) }
+
+    val productTypes = listOf("Beer", "BeerFlavored", "Softdrink", "Energy-Drink")
+
+    val filteredProducts = allProducts.filter {
+        (itemType == "All" || it.type == itemType) &&
+                (searchQuery.isEmpty() || it.productName.contains(searchQuery, ignoreCase = true))
+    }
 
     Column(
         modifier = Modifier
@@ -74,140 +93,146 @@ fun Inventory(navController: NavController){
             .padding(top = insets.calculateTopPadding())
             .background(Brush.horizontalGradient(colors = listOf(BlueStart, BlueEnd))),
         horizontalAlignment = Alignment.CenterHorizontally
-    ){
-        Row(modifier = Modifier.fillMaxWidth().padding(0.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically){
-            Text(text = "INVENTORY",
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(0.dp),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "INVENTORY",
                 fontFamily = kanit_bold,
                 fontWeight = FontWeight.Bold,
                 fontSize = 30.sp,
-                color = Color.White)
+                color = Color.White
+            )
             Spacer(modifier = Modifier.fillMaxWidth(0.21f))
-            Icon(painter = painterResource(id = R.drawable.face_man)
-                , contentDescription = "Profile",
-                modifier = Modifier.size(70.dp).padding(end = 15.dp).clickable {  },)
+            Icon(
+                painter = painterResource(id = R.drawable.face_man),
+                contentDescription = "Profile",
+                modifier = Modifier
+                    .size(70.dp)
+                    .padding(end = 15.dp)
+                    .clickable { },
+            )
         }
 
-        Row(modifier = Modifier.fillMaxWidth(0.98f)
-            .height(70.dp).padding(top = 20.dp).clip(RoundedCornerShape(5.dp)).background(Color.White), horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically){
-            Text(text = "All Items >",
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(0.98f)
+                .height(70.dp)
+                .padding(top = 20.dp)
+                .clip(RoundedCornerShape(5.dp))
+                .background(Color.White),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "All Items >",
                 color = Color.Gray,
                 fontFamily = font_abeezee,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
                 modifier = Modifier.padding(start = 15.dp)
             )
+            Text(
+                text = itemType,
+                fontFamily = font_archivo_bold,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(start = 5.dp)
+            )
 
-            Text(text = itemType, fontFamily = font_archivo_bold, fontSize = 14.sp, modifier = Modifier.padding(start = 5.dp))
+            DropdownMenu(
+                expanded = isTypeMenuExpanded,
+                onDismissRequest = { isTypeMenuExpanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("All") },
+                    onClick = {
+                        itemType = "All"
+                        isTypeMenuExpanded = false
+                    }
+                )
+                productTypes.forEach { type ->
+                    DropdownMenuItem(
+                        text = { Text(type) },
+                        onClick = {
+                            itemType = type
+                            isTypeMenuExpanded = false
+                        }
+                    )
+                }
+            }
         }
 
         Column(
-            modifier = Modifier.fillMaxWidth(0.98f)
+            modifier = Modifier
+                .fillMaxWidth(0.98f)
                 .fillMaxHeight(0.98f)
                 .padding(top = 5.dp)
                 .clip(RoundedCornerShape(5.dp))
-                .background(Color.White),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ){
-            Row(
-                modifier = Modifier.fillMaxWidth()
-                    .height(45.dp)
-                    .border(1.dp, dirtyWhite),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
-            ){
-                SearchBar(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    onSearch = {
-
-                    },
-                    modifier = Modifier.fillMaxWidth(0.5f)
-                        .height(25.dp)
-                        .padding(start = 10.dp)
-                        .border(1.dp, Color.Black,RoundedCornerShape(3.dp))
-                )
-            }
-
-            Column(
+                .background(Color.White)
+        ) {
+            TextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Search products...") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
-                    .fillMaxHeight(0.98f)
-                    .padding(top = 20.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(dirtyWhite),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top
-            ){
-                Row(
-                    modifier = Modifier.fillMaxWidth(0.7f)
-                        .height(60.dp)
-                        .padding(top = 15.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Color.White),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ){
-                    Icon(painter = painterResource(id = R.drawable.beers)
-                        , contentDescription = "Beers",
-                        modifier = Modifier
-                            .clickable { itemType = "Beer" }
-                            .size(30.dp),
-                        tint = if(itemType == "Beer") Color.Black else Color.Gray
-                    )
-                    Icon(painter = painterResource(id = R.drawable.softdrink)
-                        , contentDescription = "Softdrink",
-                        modifier = Modifier
-                            .clickable { itemType = "Softdrink" }
-                            .size(30.dp),
-                        tint = if(itemType == "Softdrink") Color.Black else Color.Gray
-                    )
-                    Icon(painter = painterResource(id = R.drawable.energy_drink)
-                        , contentDescription = "Energy-Drink",
-                        modifier = Modifier
-                            .clickable { itemType = "Energy-Drink" }
-                            .size(30.dp),
-                        tint = if(itemType == "Energy-Drink") Color.Black else Color.Gray
-                    )
-                    Icon(painter = painterResource(id = R.drawable.milk)
-                        , contentDescription = "ETC",
-                    modifier = Modifier
-                        .clickable { itemType = "BeerFlavored" }
-                        .size(30.dp),
-                        tint = if(itemType == "BeerFlavored") Color.Black else Color.Gray
-                    )
-                }
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .height(48.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedIndicatorColor = BlueStart,
+                    unfocusedIndicatorColor = dirtyWhite,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedContainerColor = Color.Transparent
+                )
+            )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(0.9f).padding(top = 10.dp)
-                        .clip(RoundedCornerShape(5.dp))
-                        .background(Color.White),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ){
-                    Text(text = "ITEMS: 8", fontFamily = font_archivo_bold, fontSize = 11.sp)
-                    Text(text = "TOTAL UNITS: 87", fontFamily = font_archivo_bold, fontSize = 11.sp)
-                    Text(text = "TOTAL VALUE: 12,562", fontFamily = font_archivo_bold, fontSize = 11.sp)
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(horizontal = 16.dp)
+            ) {
+                items(
+                    items = filteredProducts,
+                    key = { it.productId }
+                ) { product ->
+                    InventoryItem(
+                        name = product.productName,
+                        amount = product.normalPrice,
+                        quantity = product.stock
+                    )
+                    HorizontalDivider(
+                        thickness = 1.dp,
+                        color = dirtyWhite
+                    )
                 }
-                InventorySection(itemType)
             }
         }
     }
 }
 
-@Composable
-fun InventorySection(condition: String) {
-    val inventoryViewModel = LocalReceiptViewModel.current
-    val inventoryList = inventoryViewModel.productList
 
+@Composable
+fun InventorySection(filteredProducts: List<Products>) {
     LazyColumn(
         modifier = Modifier
             .fillMaxWidth(0.8f)
             .fillMaxHeight(0.9f)
             .padding(top = 10.dp)
     ) {
-        itemsIndexed(inventoryList) { index, item ->
-            if(condition == item.type) InventoryItem(item.name, item.price, item.stock)
+        itemsIndexed(filteredProducts) { index, product ->
+            InventoryItem(
+                name = product.productName,
+                amount = product.normalPrice,
+                quantity = product.stock
+            )
         }
     }
 }
