@@ -4,6 +4,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,15 +24,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.kaydensdigitalassistant.data.CustomerDetail
+import com.example.kaydensdigitalassistant.data.CustomerDetailViewModel
 import com.example.kaydensdigitalassistant.ui.theme.BlueEnd
 import com.example.kaydensdigitalassistant.ui.theme.BlueStart
 import com.example.kaydensdigitalassistant.ui.theme.SkyBlue
@@ -112,7 +118,7 @@ fun SelectCustomer(navController: NavController){
                 isOldCustomer = false
             }, customerPicked = {
                 isClosed = true
-                receiptViewModel.clearReceiptItems()
+                receiptViewModel.receiptItemsState.clear()
                 navController.navigate("receipt")
             })
         }
@@ -123,7 +129,7 @@ fun SelectCustomer(navController: NavController){
                 isNewCustomer = false
             },customerPicked = {
                 isClosed = true
-                receiptViewModel.clearReceiptItems()
+                receiptViewModel.receiptItemsState.clear()
                 navController.navigate("receipt")
             }
             )
@@ -132,9 +138,10 @@ fun SelectCustomer(navController: NavController){
 }
 
 @Composable
-fun SelectOldCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
+fun SelectOldCustomer(onClose: () -> Unit, customerPicked: (CustomerDetail) -> Unit) {
     val customerViewModel = LocalCustomerViewModel.current
-    val customerDetails = customerViewModel.customerDetails
+    val customerDetails by customerViewModel.customerDetails.collectAsState(initial = emptyList())
+    var searchQuery by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -172,12 +179,37 @@ fun SelectOldCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
                 Text("Old Customer", fontFamily = font_archivo, color = BlueEnd, fontSize = 30.sp)
             }
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = {
+                        searchQuery = it
+                        customerViewModel.setSearchQuery(it)
+                    },
+                    placeholder = { Text("Search customers") },
+                    modifier = Modifier.weight(1f)
+                )
+
+                IconButton(onClick = { customerViewModel.setSortOrder(CustomerDetailViewModel.SortOrder.BY_NAME) }) {
+                    Icon(Icons.Default.KeyboardArrowDown, "Sort by name")
+                }
+
+                IconButton(onClick = { customerViewModel.setSortOrder(CustomerDetailViewModel.SortOrder.BY_ADDRESS) }) {
+                    Icon(Icons.Default.LocationOn, "Sort by address")
+                }
+            }
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth(0.6f)
                     .fillMaxHeight(0.9f)
             ) {
-                Text(text = "Search", modifier = Modifier.padding(8.dp))
+
 
                 LazyColumn(
                     modifier = Modifier
@@ -199,14 +231,12 @@ fun SelectOldCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
                         .padding(10.dp)
                 ) {
                     itemsIndexed(customerDetails) { index, customer ->
-                        println(customer)
                         CustomerItem(
                             name = customer.name,
-                            gender = customer.gender,
                             contact = customer.contactNumber,
                             address = customer.address
                         ){
-                            customerPicked()
+                            customerPicked(customer)
                         }
                     }
                 }
@@ -215,13 +245,12 @@ fun SelectOldCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
     }
 }
 
-
 @Composable
-fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit){
+fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
     val customerViewModel = LocalCustomerViewModel.current
-    var fullName by remember{ mutableStateOf("")}
-    var contactNumber by remember{ mutableStateOf("")}
-    var address by remember{ mutableStateOf("")}
+    var fullName by remember { mutableStateOf("") }
+    var contactNumber by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -260,18 +289,19 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit){
             }
 
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .fillMaxHeight(0.8f)
                     .padding(top = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
-            ){
-                Row(modifier = Modifier.fillMaxWidth().padding(start = 45.dp), horizontalArrangement = Arrangement.Start){
+            ) {
+                Row(modifier = Modifier.fillMaxWidth().padding(start = 45.dp), horizontalArrangement = Arrangement.Start) {
                     Text(text = "FULL NAME", fontFamily = font_notosans_regular, fontSize = 15.sp, color = Color.Black)
                 }
                 OutlinedTextField(
                     value = fullName,
-                    onValueChange = {fullName = it},
+                    onValueChange = { fullName = it },
                     placeholder = {
                         Text(
                             text = "Enter Full Name",
@@ -293,12 +323,12 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit){
                         unfocusedIndicatorColor = BlueEnd
                     )
                 )
-                Row(modifier = Modifier.fillMaxWidth().padding(start = 45.dp), horizontalArrangement = Arrangement.Start){
+                Row(modifier = Modifier.fillMaxWidth().padding(start = 45.dp), horizontalArrangement = Arrangement.Start) {
                     Text(text = "NUMBER", fontFamily = font_notosans_regular, fontSize = 15.sp)
                 }
                 OutlinedTextField(
                     value = contactNumber,
-                    onValueChange = {contactNumber = it},
+                    onValueChange = { contactNumber = it },
                     placeholder = {
                         Text(
                             text = "Enter Number",
@@ -320,12 +350,12 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit){
                         unfocusedIndicatorColor = BlueEnd
                     )
                 )
-                Row(modifier = Modifier.fillMaxWidth().padding(start = 45.dp), horizontalArrangement = Arrangement.Start){
+                Row(modifier = Modifier.fillMaxWidth().padding(start = 45.dp), horizontalArrangement = Arrangement.Start) {
                     Text(text = "ADDRESS", fontFamily = font_notosans_regular, fontSize = 15.sp)
                 }
                 OutlinedTextField(
                     value = address,
-                    onValueChange = {address = it},
+                    onValueChange = { address = it },
                     placeholder = {
                         Text(
                             text = "Enter Address",
@@ -348,12 +378,30 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit){
                     )
                 )
             }
+
             Button(
                 onClick = {
-                    customerViewModel.addCustomerDetail(CustomerDetail(fullName, "Male", address, contactNumber))
-                    customerViewModel.currentCustomer.value = CustomerDetail(fullName, "Male", address, contactNumber)
-                    println(customerViewModel.currentCustomer)
-                    customerPicked()
+                    when {
+                        fullName.isBlank() -> {
+                            // Show error for empty name
+                        }
+                        contactNumber.isBlank() -> {
+                            // Show error for empty contact
+                        }
+                        address.isBlank() -> {
+                            // Show error for empty address
+                        }
+                        else -> {
+                            val newCustomer = CustomerDetail(
+                                name = fullName.trim(),
+                                address = address.trim(),
+                                contactNumber = contactNumber.trim()
+                            )
+                            customerViewModel.insertCustomer(newCustomer)
+                            customerViewModel.currentCustomer.value = newCustomer
+                            customerPicked()
+                        }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth(0.7f)
@@ -376,11 +424,10 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit){
 @Composable
 fun CustomerItem(
     name: String,
-    gender: String,
     contact: String,
     address: String,
     isSelected: () -> Unit
-){
+) {
     val customerDetail = LocalCustomerViewModel.current
     Row(
         modifier = Modifier
@@ -388,29 +435,37 @@ fun CustomerItem(
             .padding(start = 15.dp, top = 10.dp)
             .clickable {
                 isSelected()
-                customerDetail.setCustomerDetail(CustomerDetail(name, gender, address, contact))
-                       },
+                customerDetail.currentCustomer.value = CustomerDetail(name = name, address = address, contactNumber = contact)
+            },
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
-    ){
-        Icon(painter = if(gender == "Male") painterResource(id = R.drawable.face_man)
-        else painterResource(id = R.drawable.face_woman), contentDescription = "Icon",
-            modifier = Modifier.size(35.dp))
+    ) {
+        // Default icon as face_man
+        Icon(
+            painter = painterResource(id = R.drawable.face_man),
+            contentDescription = "Icon",
+            modifier = Modifier.size(35.dp)
+        )
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Center
-        ){
+        ) {
             var detailText = buildAnnotatedString {
-                withStyle(SpanStyle(fontSize = 15.sp, fontFamily = font_notosans_bold)){
+                withStyle(SpanStyle(fontSize = 15.sp, fontFamily = font_notosans_bold)) {
                     append("$name\n")
                 }
-                withStyle(SpanStyle(fontSize = 10.sp, fontFamily = font_notosans_regular)){
+                withStyle(SpanStyle(fontSize = 10.sp, fontFamily = font_notosans_regular)) {
                     append("$contact\t\t")
                     append(address)
                 }
             }
-            Text(text = detailText, color = Color.Black, style = TextStyle(lineHeight = 13.sp,), modifier = Modifier.padding(start = 5.dp))
+            Text(
+                text = detailText,
+                color = Color.Black,
+                style = TextStyle(lineHeight = 13.sp),
+                modifier = Modifier.padding(start = 5.dp)
+            )
         }
     }
 }

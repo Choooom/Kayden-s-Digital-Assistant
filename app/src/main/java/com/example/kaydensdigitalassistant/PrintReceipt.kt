@@ -1,5 +1,7 @@
 package com.example.kaydensdigitalassistant
 
+import com.example.kaydensdigitalassistant.data.SalesItem
+import PrintToThermalPrinter
 import android.app.Activity
 import android.content.Context
 import android.graphics.Bitmap
@@ -65,6 +67,7 @@ import com.example.kaydensdigitalassistant.ui.theme.ButtonGreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.graphics.Canvas
+import android.icu.text.SimpleDateFormat
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.systemBars
@@ -73,14 +76,25 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
+import androidx.room.withTransaction
+import com.example.kaydensdigitalassistant.data.AppDatabase
+import com.example.kaydensdigitalassistant.data.Converters
 import com.example.kaydensdigitalassistant.data.CustomerDetail
+import com.example.kaydensdigitalassistant.data.CustomerDetailViewModel
 import com.example.kaydensdigitalassistant.data.OrderDetails
+import com.example.kaydensdigitalassistant.data.ReceiptItem
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.Date
+import java.util.Locale
 import kotlin.random.Random
 
 
@@ -94,6 +108,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
 
     println("Confirmed Receipt: ${viewModel.receiptItemsState}")
     var isConfirmed by remember{ mutableStateOf(false)}
+    var print by remember{ mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -147,7 +162,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
                 modifier = Modifier
                     .size(40.dp)
                     .clickable {
-
+                        print = true
                     },
             )
 
@@ -429,6 +444,21 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
                 )
             }
         }
+
+        if(print){
+            PrintToThermalPrinter(
+                businessName = "KAYDEN",
+                employeeId = "#023578",
+                dateTime = getCurrentTimeDate(),
+                customerAddress = "${currentCustomer.address}, Palmera Bulacan",
+                paymentOption = paymentOption,
+                receiptItems = viewModel.receiptItemsState,
+                totalAmount = viewModel.getTotalAmount(),
+                pricingOption = pricingOption
+            )
+            print = false
+        }
+
         if(isConfirmed){
             ConfirmPurchase(navController, pricingOption)
             navController.navigate("selectCustomer")
@@ -439,45 +469,68 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
 
 @Composable
 fun ConfirmPurchase(navController: NavController, pricingOption: String) {
-    val viewModel = LocalReceiptViewModel.current
-    val customerViewModel = LocalCustomerViewModel.current
-    val salesViewModel = LocalSalesViewModel.current
+    val customerDetailViewModel = LocalCustomerViewModel.current
+    val receiptViewModel = LocalReceiptViewModel.current
+    val productsViewModel = LocalProductsViewModel.current
+    val currentCustomer = customerDetailViewModel.currentCustomer.value
+    val receiptItemsState = receiptViewModel.receiptItemsState
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
-    LaunchedEffect(key1 = customerViewModel.currentCustomer.value) {
-        customerViewModel.currentCustomer.let {
+    LaunchedEffect(Unit) {
+        scope.launch {
+            val appDatabase = AppDatabase.getInstance(context)
 
-            val currentCustomerDetails = customerViewModel.currentCustomer.value
+            appDatabase.withTransaction {
+                // Insert customer and sales record
+                val customerId = appDatabase.customerDetailDao().insertCustomer(currentCustomer)
 
-            viewModel.updateCustomerPreference(customerViewModel.currentCustomer.value)
+                val salesItem = SalesItem(
+                    customerId = customerId,
+                    employeeId = 123456789L,
+                    orderDetails = receiptItemsState,
+                    totalAmount = calculateTotalAmount(receiptItemsState),
+                    dateDelivered = getCurrentDate(),
+                    timeDelivered = getCurrentTime()
+                )
 
-            salesViewModel.addSales(OrderDetails(
-                currentCustomerDetails.name,
-                currentCustomerDetails.address,
-                currentCustomerDetails.contactNumber,
-                viewModel.getReceiptList(),
-                pricingOption,
-                viewModel.getTotalAmount(),
-                getCurrentTimeDate(),
-                Random.nextInt(10_000_000, 100_000_000)
-            ))
+                appDatabase.salesItemDao().insertSalesItem(salesItem)
 
-            viewModel.receiptItemsState.forEach { receiptItem ->
-                // Find matching product in productList
-                val product = viewModel.productList.find { it.name == receiptItem.name }
-                if (product != null) {
-                    // Reduce the stock of the product
-                    product.stock -= receiptItem.quantity // Assuming 'stock' is the property to reduce
+                // Update product stocks
+                receiptItemsState.forEach { item ->
+                    productsViewModel.updateStockAfterSale(
+                        productName = item.name,
+                        quantity = item.quantity.toDouble()
+                    )
                 }
             }
 
-            snapshotFlow { salesViewModel.salesList }
-                .collect { updatedSalesList ->
-                    println("Updated Sales List: $updatedSalesList")
-                    println("Updated Sales List: ${updatedSalesList[0]}")
-                }
-
-            viewModel.clearReceiptItems()
-            navController.navigate("receipt")
+            receiptViewModel.receiptItemsState.clear()
+            navController.navigate("home")
         }
     }
 }
+
+private fun calculateTotalAmount(receiptItemsState: List<ReceiptItem>): Double {
+    // Calculate the total amount from the receiptItems
+    return receiptItemsState.sumOf { it.amount * it.quantity}
+}
+
+private fun getCurrentTime(): String {
+    // Get the current time in a string format
+    val currentTime = System.currentTimeMillis()
+    return SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(currentTime))
+}
+
+fun getCurrentDate(): String {
+    // Get the current time in a string format
+    val currentTime = System.currentTimeMillis()
+    return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(currentTime))
+}
+
+private fun generateOrderNumber(): Int {
+    // Generate a random order number (can be replaced with your logic)
+    return (1000..9999).random()
+}
+
+

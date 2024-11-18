@@ -34,12 +34,12 @@ class MainActivity: ComponentActivity() {
 
         setContent {
             KaydensDigitalAssistantTheme {
-                ReceiptProvider {
-                    CustomerDetailProvider {
-                        SalesProvider {
-
+                ProductsProvider {
+                    ReceiptProvider {
+                        CustomerDetailProvider {
+                            SalesProvider {
                                 MainScreen()
-
+                            }
                         }
                     }
                 }

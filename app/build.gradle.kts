@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.kotlin.kapt")
 }
 
 android {
@@ -40,11 +41,23 @@ android {
 }
 
 dependencies {
+
+    implementation(libs.activity)
+    implementation(libs.lifecycle.runtime)
+    implementation(libs.lifecycle.viewmodel)
     //implementation to para sa navigation
     implementation(libs.navigation.compose)
 
     //for drowdown
     implementation(libs.material3)
+    
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.adapters)
+    implementation(libs.androidx.runtime.livedata)
+    kapt(libs.androidx.room.compiler)
+
+    implementation(libs.gson)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
