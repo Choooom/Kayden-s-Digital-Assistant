@@ -12,6 +12,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class EmployeeDetailViewModel(private val repository: EmployeeRepository) : ViewModel() {
+    var name: String = ""
+    var contactNumber = "09296726163"
+    var emailAddress = ""
+    var birthdate = ""
+    var password = ""
+    var username = ""
+
     val allEmployees: LiveData<List<EmployeeDetail>> = repository.allEmployees.asLiveData()
 
     private val _currentEmployee = MutableStateFlow<EmployeeDetail?>(null)
@@ -24,6 +31,33 @@ class EmployeeDetailViewModel(private val repository: EmployeeRepository) : View
 
     fun insertEmployee(employee: EmployeeDetail) = viewModelScope.launch {
         repository.insertEmployee(employee)
+    }
+
+    fun clearEmployeeDetail() = viewModelScope.launch {
+        name = ""
+        contactNumber = ""
+        emailAddress = ""
+        birthdate = ""
+        password = ""
+        username = ""
+    }
+
+    fun insertCompleteEmployee() = viewModelScope.launch {
+        val employee = EmployeeDetail(
+            name = name,
+            contactNumber = contactNumber,
+            emailAddress = emailAddress,
+            birthdate = birthdate,
+            password = password,
+            username = username
+        )
+        repository.insertEmployee(employee)
+        name = ""
+        contactNumber = ""
+        emailAddress = ""
+        birthdate = ""
+        password = ""
+        username = ""
     }
 
     class EmployeeDetailViewModelFactory(private val repository: EmployeeRepository) :

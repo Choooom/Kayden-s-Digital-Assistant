@@ -1,5 +1,9 @@
 package com.example.kaydensdigitalassistant
 
+import android.app.Activity
+import android.content.Context
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +23,13 @@ import androidx.navigation.compose.rememberNavController
 import com.example.kaydensdigitalassistant.BottomNavBar
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavController
+import com.google.firebase.FirebaseException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.PhoneAuthCredential
+import com.google.firebase.auth.PhoneAuthOptions
+import com.google.firebase.auth.PhoneAuthProvider
+import java.util.concurrent.TimeUnit
 
 object CustomerSelectionHelper {
     var isCustomerSelected by mutableStateOf(false)
@@ -93,6 +104,44 @@ fun MainScreen() {
             }
             composable("salesReport"){
                 PerDaySale(navController = navController)
+            }
+
+            composable("addNewAccount"){
+                AddNewAccount(navController = navController)
+            }
+
+            composable("numberVerification"){
+                NumberVerification(navController = navController)
+            }
+
+            composable("userVerification"){
+                UserVerification(navController = navController)
+            }
+
+            composable("manageAccounts"){
+                ManageAccount(navController = navController)
+            }
+
+            composable("numberVerification"){
+                NumberVerification(navController = navController)
+            }
+            composable("otp"){
+                UserVerification(navController = navController)
+            }
+            composable("success"){
+                SuccessScreen(navController = navController)
+            }
+
+            composable("emailVerification"){
+                EmailVerification(navController = navController)
+            }
+
+            composable("verifyEmail"){
+                VerifyEmailScreen(navController = navController)
+            }
+
+            composable("resetPassword") {
+                PasswordResetScreen(navController = navController)
             }
         }
 

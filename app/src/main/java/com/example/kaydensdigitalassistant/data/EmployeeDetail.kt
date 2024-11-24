@@ -1,5 +1,6 @@
 package com.example.kaydensdigitalassistant.data
 
+import android.graphics.Bitmap
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -12,5 +13,6 @@ data class EmployeeDetail(
     val emailAddress: String,
     val birthdate: String,
     val password: String,
-    val username: String
+    val username: String,
+    //val userProfile: Bitmap? = null
 )

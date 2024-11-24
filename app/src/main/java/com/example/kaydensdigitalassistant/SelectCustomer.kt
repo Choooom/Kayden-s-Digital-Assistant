@@ -74,7 +74,7 @@ fun SelectCustomer(navController: NavController){
     /*
         val appViewModel = LocalAppViewModel.current
         appViewModel.clearAllData()
-    */
+   */
 
     Box(
         modifier = Modifier

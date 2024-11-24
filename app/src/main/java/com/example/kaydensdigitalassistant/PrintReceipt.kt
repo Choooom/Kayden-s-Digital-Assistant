@@ -427,7 +427,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
                     paymentOption = paymentOption,
                     receiptItems = viewModel.receiptItemsState,
                     totalAmount = viewModel.getTotalAmount(),
-                    pricingOption = pricingOption
+                    pricingOption = paymentOption
                 )
             }
             print = false
@@ -442,7 +442,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
 }
 
 @Composable
-fun ConfirmPurchase(navController: NavController, pricingOption: String) {
+fun ConfirmPurchase(navController: NavController, paymentOption: String) {
     val customerDetailViewModel = LocalCustomerViewModel.current
     val receiptViewModel = LocalReceiptViewModel.current
     val productsViewModel = LocalProductsViewModel.current
@@ -468,7 +468,8 @@ fun ConfirmPurchase(navController: NavController, pricingOption: String) {
                         orderDetails = receiptItemsState,
                         totalAmount = calculateTotalAmount(receiptItemsState),
                         dateDelivered = getCurrentDate(),
-                        timeDelivered = getCurrentTime()
+                        timeDelivered = getCurrentTime(),
+                        paymentMethod = paymentOption
                     )
 
                     appDatabase.salesItemDao().insertSalesItem(salesItem)

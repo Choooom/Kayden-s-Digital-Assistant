@@ -16,5 +16,6 @@ data class SalesItem(
     val orderDetails: List<ReceiptItem>,
     val totalAmount: Double,
     val dateDelivered: String,
-    val timeDelivered: String
+    val timeDelivered: String,
+    val paymentMethod: String//newly added
 )

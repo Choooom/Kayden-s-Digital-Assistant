@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "762462476300",
+    "project_id": "kayden-tradings",
+    "storage_bucket": "kayden-tradings.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:762462476300:android:8200610f1b28d6f4dfb629",
+        "android_client_info": {
+          "package_name": "com.example.kaydensdigitalassistant"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgqMk-KV9nsC1GoNliUtBb71vOse5vDRA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

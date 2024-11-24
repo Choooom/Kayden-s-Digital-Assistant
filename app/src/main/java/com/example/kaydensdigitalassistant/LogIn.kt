@@ -174,7 +174,16 @@ fun LogIn(modifier: Modifier, backgroundColor: Color, navController: NavControll
 
                 }
 
-                WindowLink(navController, "FORGOT PASSWORD", "home", 15)
+                Text(
+                    text = "Forgot Password?",
+                    color = BlueEnd,
+                    fontFamily = font_archivo,
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .clickable { navController.navigate("resetPassword") },
+                    fontSize = 14.sp,
+                    textDecoration = TextDecoration.Underline
+                )
 
                 Row(modifier = Modifier
                     .fillMaxWidth(),
