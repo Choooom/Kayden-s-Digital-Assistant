@@ -1,17 +1,11 @@
 package com.example.kaydensdigitalassistant
 
-import android.app.Activity
-import android.content.Context
-import android.util.Log
-import android.widget.Toast
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,16 +14,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.kaydensdigitalassistant.BottomNavBar
-import androidx.compose.runtime.LaunchedEffect
-import androidx.navigation.NavController
-import com.google.firebase.FirebaseException
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import com.google.firebase.auth.PhoneAuthCredential
-import com.google.firebase.auth.PhoneAuthOptions
-import com.google.firebase.auth.PhoneAuthProvider
-import java.util.concurrent.TimeUnit
+import androidx.compose.runtime.collectAsState
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 object CustomerSelectionHelper {
     var isCustomerSelected by mutableStateOf(false)
@@ -49,10 +36,11 @@ fun MainScreen() {
     val navBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry.value?.destination?.route
 
-    val isAdminLoggedIn = remember { mutableStateOf(false) }
+    val userRoleViewModel = LocalUserRoleViewModel.current
+    val isAdmin by userRoleViewModel.isAdmin.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        NavHost(navController = navController, startDestination = "selectCustomer", modifier = Modifier.weight(1f)) {
+        NavHost(navController = navController, startDestination = "login", modifier = Modifier.weight(1f)) {
 
             composable("login") {
                 LogIn(
@@ -62,10 +50,10 @@ fun MainScreen() {
                 )
             }
             composable("admin_login") {
-                Admin_LogIn(modifier = Modifier.padding(0.dp),
+                Admin_LogIn(
+                    modifier = Modifier.padding(0.dp),
                     backgroundColor = Color.White,
-                    navController = navController,
-                    isAdminLoggedIn = isAdminLoggedIn)
+                    navController = navController)
             }
             composable("home") {
                 HomeScreen(navController = navController)
@@ -143,10 +131,42 @@ fun MainScreen() {
             composable("resetPassword") {
                 PasswordResetScreen(navController = navController)
             }
+
+            composable(
+                route = "customerLocation/{customerId}",
+                arguments = listOf(navArgument("customerId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val customerId = backStackEntry.arguments?.getLong("customerId") ?: return@composable
+                CustomerLocationScreen(navController = navController, customerId = customerId)
+            }
+
+            composable(
+                "map/{customerId}",
+                arguments = listOf(navArgument("customerId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val customerId = backStackEntry.arguments?.getLong("customerId") ?: 0L
+                MapScreen(customerId = customerId)
+            }
+
+            composable(
+                "map/{customerId}",
+                arguments = listOf(navArgument("customerId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val customerId = backStackEntry.arguments?.getLong("customerId") ?: 0L
+                CustomerLocationScreen(navController = navController, customerId = customerId)
+            }
+
+            composable(
+                "maps/{customerId}",
+                arguments = listOf(navArgument("customerId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val customerId = backStackEntry.arguments?.getLong("customerId") ?: 0L
+                CustomerLocationViewScreen(navController = navController, customerId = customerId)
+            }
         }
 
-        if (currentRoute != "login" && currentRoute != "admin_login") {
-            BottomNavBar(navController = navController, isAdminLoggedIn.value)
-        }
+    if (currentRoute != "login" && currentRoute != "admin_login"){
+        BottomNavBar(navController = navController, isAdmin)
+    }
     }
 }

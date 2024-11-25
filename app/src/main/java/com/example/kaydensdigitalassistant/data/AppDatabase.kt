@@ -13,9 +13,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         CustomerDetail::class,
         EmployeeDetail::class,
         Products::class,
-        SalesItem::class
+        SalesItem::class,
+        CustomerLocation::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -25,6 +26,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun productsDao(): ProductsDao
     abstract fun salesItemDao(): SalesItemDao
     abstract fun appDao(): AppDao
+    abstract fun customerLocationDao(): CustomerLocationDao
 
     companion object {
         @Volatile
@@ -37,6 +39,24 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Drop the table if it exists
+                database.execSQL("DROP TABLE IF EXISTS customer_locations")
+
+                // Create the table with the exact expected structure
+                database.execSQL("""
+            CREATE TABLE customer_locations (
+                locationId INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                customerId INTEGER NOT NULL,
+                latitude REAL NOT NULL,
+                longitude REAL NOT NULL,
+                FOREIGN KEY (customerId) REFERENCES customer_details(customerId)
+            )
+        """)
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -44,7 +64,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "AppDatabase"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_2_3)
                     .build()
                 INSTANCE = instance
                 instance

@@ -10,21 +10,63 @@ import com.example.kaydensdigitalassistant.data.AppDatabase
 import com.example.kaydensdigitalassistant.data.AppRepository
 import com.example.kaydensdigitalassistant.data.AppViewModel
 import com.example.kaydensdigitalassistant.data.CustomerDetailViewModel
+import com.example.kaydensdigitalassistant.data.CustomerLocationRepository
 import com.example.kaydensdigitalassistant.data.CustomerRepository
 import com.example.kaydensdigitalassistant.data.EmployeeDetailViewModel
 import com.example.kaydensdigitalassistant.data.EmployeeRepository
+import com.example.kaydensdigitalassistant.data.LocationViewModel
+import com.example.kaydensdigitalassistant.data.LocationViewModelFactory
 import com.example.kaydensdigitalassistant.data.ProductsRepository
 import com.example.kaydensdigitalassistant.data.ProductsViewModel
 import com.example.kaydensdigitalassistant.data.ReceiptViewModel
 import com.example.kaydensdigitalassistant.data.SalesItemRepository
 import com.example.kaydensdigitalassistant.data.SalesItemViewModel
+import com.example.kaydensdigitalassistant.data.UserRoleViewModel
+import com.example.kaydensdigitalassistant.data.UserRoleViewModelFactory
+
 val LocalReceiptViewModel = compositionLocalOf<ReceiptViewModel> { error("No ReceiptViewModel provided") }
 val LocalCustomerViewModel = compositionLocalOf<CustomerDetailViewModel> { error("No CustomerViewModel provided") }
 val LocalSalesViewModel = compositionLocalOf<SalesItemViewModel> { error("No SalesViewModel provided") }
 val LocalProductsViewModel = compositionLocalOf<ProductsViewModel> { error("No ProductsViewModel provided") }
 val LocalEmployeeViewModel = compositionLocalOf<EmployeeDetailViewModel> { error("No ProductsViewModel provided") }
 val LocalAppViewModel = compositionLocalOf<AppViewModel> { error("No AppViewModel provided") }
+val LocalLocationViewModel = compositionLocalOf<LocationViewModel> { error("No LocationViewModel provided") }
+val LocalUserRoleViewModel = compositionLocalOf<UserRoleViewModel> { error("No UserRoleViewModel provided") }
 
+@Composable
+fun UserRoleProvider(content: @Composable () -> Unit) {
+    val viewModel: UserRoleViewModel = viewModel(
+        factory = UserRoleViewModelFactory()
+    )
+    ProvideUserRoleViewModel(viewModel) {
+        content()
+    }
+}
+
+@Composable
+fun ProvideUserRoleViewModel(viewModel: UserRoleViewModel, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalUserRoleViewModel provides viewModel) {
+        content()
+    }
+}
+
+@Composable
+fun LocationProvider(content: @Composable () -> Unit) {
+    val dao = AppDatabase.getInstance(LocalContext.current).customerLocationDao()
+    val repository = CustomerLocationRepository(dao)
+    val viewModel: LocationViewModel = viewModel(
+        factory = LocationViewModelFactory(repository)
+    )
+    ProvideLocationViewModel(viewModel) {
+        content()
+    }
+}
+@Composable
+fun ProvideLocationViewModel(viewModel: LocationViewModel, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalLocationViewModel provides viewModel) {
+        content()
+    }
+}
 
 @Composable
 fun ReceiptProvider(content: @Composable () -> Unit) {

@@ -1,0 +1,79 @@
+package com.example.kaydensdigitalassistant.data
+
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import androidx.room.Transaction
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+class LocationViewModel(private val repository: CustomerLocationRepository) : ViewModel() {
+    private val _selectedLocation = MutableStateFlow<Pair<Double, Double>?>(null)
+    val selectedLocation = _selectedLocation.asStateFlow()
+
+    fun updateLocation(latitude: Double, longitude: Double) {
+        _selectedLocation.value = Pair(latitude, longitude)
+    }
+
+    fun saveCustomerLocation(customerId: Long, latitude: Double, longitude: Double) = viewModelScope.launch {
+        val location = CustomerLocation(
+            customerId = customerId,
+            latitude = latitude,
+            longitude = longitude
+        )
+        repository.updateOrInsertLocation(location)
+    }
+
+    fun getCustomerLocation(customerId: Long) = repository.getLocationByCustomerId(customerId)
+
+    fun clearAllLocations() = viewModelScope.launch {
+        repository.clearAllLocations()
+    }
+}
+
+class LocationViewModelFactory(private val repository: CustomerLocationRepository) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(LocationViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return LocationViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+
+
+class CustomerLocationRepository(private val dao: CustomerLocationDao) {
+    suspend fun insertLocation(location: CustomerLocation) = dao.insertLocation(location)
+
+    fun getLocationByCustomerId(customerId: Long) = dao.getLocationByCustomerId(customerId)
+
+    suspend fun deleteLocationByCustomerId(customerId: Long) = dao.deleteLocationByCustomerId(customerId)
+
+    suspend fun populateTestData() {
+        // Manila coordinates
+        dao.insertTestData(1, 14.5995, 120.9842)
+        dao.insertTestData(2, 14.6091, 120.9876)
+        dao.insertTestData(3, 14.5889, 120.9799)
+    }
+
+    suspend fun customerExists(customerId: Long): Boolean {
+        return dao.customerExists(customerId)
+    }
+
+    @Transaction
+    suspend fun updateOrInsertLocation(location: CustomerLocation) {
+        val existingLocation = dao.getLocationByCustomerIdSync(location.customerId)
+        if (existingLocation != null) {
+            dao.updateLocation(location.copy(locationId = existingLocation.locationId))
+        } else {
+            dao.insertLocation(location)
+        }
+    }
+
+    suspend fun clearAllLocations() {
+        dao.clearAllLocations()
+    }
+}
+

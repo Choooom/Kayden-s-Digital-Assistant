@@ -71,7 +71,6 @@ fun GreetingPreview() {
 @Composable
 fun AddNewAccount(navController: NavController){
     val employeeViewModel = LocalEmployeeViewModel.current
-    employeeViewModel.clearEmployeeDetail()
 
     var fullName: String by remember{
         mutableStateOf("")

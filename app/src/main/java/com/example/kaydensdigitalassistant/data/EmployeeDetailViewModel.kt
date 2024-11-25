@@ -35,7 +35,6 @@ class EmployeeDetailViewModel(private val repository: EmployeeRepository) : View
 
     fun clearEmployeeDetail() = viewModelScope.launch {
         name = ""
-        contactNumber = ""
         emailAddress = ""
         birthdate = ""
         password = ""
@@ -43,6 +42,7 @@ class EmployeeDetailViewModel(private val repository: EmployeeRepository) : View
     }
 
     fun insertCompleteEmployee() = viewModelScope.launch {
+        println("Insert Employee Called")
         val employee = EmployeeDetail(
             name = name,
             contactNumber = contactNumber,
@@ -52,12 +52,14 @@ class EmployeeDetailViewModel(private val repository: EmployeeRepository) : View
             username = username
         )
         repository.insertEmployee(employee)
-        name = ""
-        contactNumber = ""
-        emailAddress = ""
-        birthdate = ""
-        password = ""
-        username = ""
+    }
+
+    fun updateEmployee(employee: EmployeeDetail) = viewModelScope.launch {
+        repository.updateEmployee(employee)
+    }
+
+    fun deleteEmployee(employee: EmployeeDetail) = viewModelScope.launch {
+        repository.deleteEmployee(employee)
     }
 
     class EmployeeDetailViewModelFactory(private val repository: EmployeeRepository) :
@@ -81,5 +83,13 @@ class EmployeeRepository(private val employeeDetailDao: EmployeeDetailDao) {
 
     suspend fun loginEmployee(username: String, password: String): EmployeeDetail? {
         return employeeDetailDao.loginEmployee(username, password)
+    }
+
+    suspend fun updateEmployee(employee: EmployeeDetail) {
+        employeeDetailDao.updateEmployee(employee)
+    }
+
+    suspend fun deleteEmployee(employee: EmployeeDetail) {
+        employeeDetailDao.deleteEmployee(employee)
     }
 }

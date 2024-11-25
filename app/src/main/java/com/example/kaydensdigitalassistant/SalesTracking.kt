@@ -101,28 +101,7 @@ fun SalesTracking(navController: NavController) {
         verticalArrangement = Arrangement.Top
     ) {
         // Header section remains the same
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(0.dp),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "SALES",
-                fontFamily = kanit_bold,
-                fontWeight = FontWeight.Bold,
-                fontSize = 30.sp,
-                color = Color.White
-            )
-            Spacer(modifier = Modifier.fillMaxWidth(0.28f))
-            Icon(
-                painter = painterResource(id = R.drawable.face_man),
-                contentDescription = "Profile",
-                modifier = Modifier
-                    .size(70.dp)
-                    .padding(end = 15.dp)
-                    .clickable { }
-            )
-        }
+        TopBar(navController = navController, "SALES")
 
         Column(
             modifier = Modifier

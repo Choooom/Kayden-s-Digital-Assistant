@@ -22,14 +22,20 @@ import com.example.kaydensdigitalassistant.font_notosans_bold
 
 @Composable
 fun BottomNavBar(navController: NavController, isAdminLoggedIn: Boolean) {
-    val bottomNavItems = mutableListOf(
-        BottomNavItem("Sales", ImageVector.vectorResource(id = R.drawable.sales), "salesTracking"),
-        BottomNavItem("Receipt", ImageVector.vectorResource(id = R.drawable.bill), "selectCustomer"),
-        BottomNavItem("Inventory", ImageVector.vectorResource(id = R.drawable.inventory), "inventory")
-    )
-
-    if (isAdminLoggedIn) {
-        bottomNavItems.add(BottomNavItem("Accounts", ImageVector.vectorResource(id = R.drawable.account_group_outline), "addAccount"))
+    val bottomNavItems = if (isAdminLoggedIn) {
+        mutableListOf(
+            BottomNavItem("Stats", ImageVector.vectorResource(id = R.drawable.download), "salesReport"),
+            BottomNavItem("Sales", ImageVector.vectorResource(id = R.drawable.sales), "salesTracking"),
+            BottomNavItem("Receipt", ImageVector.vectorResource(id = R.drawable.bill), "selectCustomer"),
+            BottomNavItem("Inventory", ImageVector.vectorResource(id = R.drawable.inventory), "inventory"),
+            BottomNavItem("Accounts", ImageVector.vectorResource(id = R.drawable.account_group_outline), "manageAccounts")
+        )
+    } else {
+        mutableListOf(
+            BottomNavItem("Sales", ImageVector.vectorResource(id = R.drawable.sales), "salesTracking"),
+            BottomNavItem("Receipt", ImageVector.vectorResource(id = R.drawable.bill), "selectCustomer"),
+            BottomNavItem("Inventory", ImageVector.vectorResource(id = R.drawable.inventory), "inventory")
+        )
     }
 
     NavigationBar(

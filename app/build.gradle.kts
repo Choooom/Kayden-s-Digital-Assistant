@@ -43,8 +43,14 @@ android {
 
 dependencies {
 
+    implementation(libs.vico.compose)
+    implementation(libs.vico.compose.m3)
+
     implementation(platform(libs.firebase.bom))
     implementation(libs.google.firebase.auth)
+
+    implementation(libs.osmdroid.android)
+    implementation(libs.osmdroid.routing)
 
     implementation(libs.activity)
     implementation(libs.lifecycle.runtime)

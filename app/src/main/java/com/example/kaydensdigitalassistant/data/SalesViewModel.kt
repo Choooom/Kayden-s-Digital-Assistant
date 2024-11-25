@@ -12,8 +12,16 @@ import androidx.lifecycle.viewModelScope
 import com.example.kaydensdigitalassistant.LocalSalesViewModel
 import com.example.kaydensdigitalassistant.getCurrentTimeDate
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 import kotlin.random.Random
 
 class SalesItemViewModel(private val repository: SalesItemRepository) : ViewModel() {
@@ -55,6 +63,56 @@ class SalesItemViewModel(private val repository: SalesItemRepository) : ViewMode
         repository.getSalesItemsByCustomer(salesId).collect { salesItems ->
             _selectedSalesItem.value = salesItems.firstOrNull()
         }
+    }
+
+    fun getTodayVsYesterdaySales(): Flow<Pair<Double, Double>> = flow {
+        val today = SimpleDateFormat("MM-dd-yyyy", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Manila")
+        }.format(Date())
+
+        val yesterday = SimpleDateFormat("MM-dd-yyyy", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Manila")
+        }.format(Date().apply { time -= 24 * 60 * 60 * 1000 })
+
+        combine(
+            repository.getSalesByDate(today),
+            repository.getSalesByDate(yesterday)
+        ) { todaySales, yesterdaySales ->
+            Pair(
+                todaySales.sumOf { it.totalAmount },
+                yesterdaySales.sumOf { it.totalAmount }
+            )
+        }.collect { emit(it) }
+    }
+
+    fun getProfit(): Flow<List<Pair<String, Double>>> = flow {
+        val today = SimpleDateFormat("MM-dd-yyyy", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Manila")
+        }.format(Date())
+
+        val yesterday = SimpleDateFormat("MM-dd-yyyy", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Manila")
+        }.format(Date().apply { time -= 24 * 60 * 60 * 1000 })
+
+        combine(
+            repository.getSalesByDate(today),
+            repository.getSalesByDate(yesterday)
+        ) { todaySales, yesterdaySales ->
+            listOf(
+                Pair(today, todaySales.sumOf { it.totalAmount * 0.2 }),
+                Pair(yesterday, yesterdaySales.sumOf { it.totalAmount * 0.2 })
+            )
+        }.collect { emit(it) }
+    }
+
+    fun getNumberOfSales(): Flow<List<Pair<String, Int>>> = flow {
+        repository.allSalesItems.map { sales ->
+            sales.groupBy { it.dateDelivered }
+                .map { (date, items) ->
+                    Pair(date, items.size)
+                }
+                .sortedByDescending { it.first }
+        }.collect { emit(it) }
     }
 
     fun fetchSalesBySalesId(salesId: Long) = viewModelScope.launch {

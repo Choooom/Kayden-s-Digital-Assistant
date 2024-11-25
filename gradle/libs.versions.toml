@@ -25,6 +25,9 @@ uiDesktop = "1.4.3"
 runtimeLivedata = "1.7.5"
 googleGmsGoogleServices = "4.4.2"
 firebaseAuth = "23.1.0"
+osmdroid = "6.1.16"
+osmbonuspack = "6.9.0"
+vico = "1.13.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -60,6 +63,14 @@ androidx-adapters = { group = "androidx.databinding", name = "adapters", version
 androidx-ui-desktop = { group = "androidx.compose.ui", name = "ui-desktop", version.ref = "uiDesktop" }
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version.ref = "firebaseAuth" }
+osmdroid-android = { group = "org.osmdroid", name = "osmdroid-android", version.ref = "osmdroid" }
+osmdroid-routing = { group = "com.github.MKergall", name = "osmbonuspack", version = "6.9.0" }
+osmdroid-wms = { group = "org.osmdroid", name = "osmdroid-wms", version.ref = "osmdroid" }
+osmdroid-mapsforge = { group = "org.osmdroid", name = "osmdroid-mapsforge", version.ref = "osmdroid" }
+osmdroid-third-party = { group = "org.osmdroid", name = "osmdroid-third-party", version.ref = "osmdroid" }
+osmdroid-bonuspack = { group = "com.github.MKergall", name = "osmbonuspack", version.ref = "osmbonuspack" }
+vico-compose = { group = "com.patrykandpatrick.vico", name = "compose", version.ref = "vico" }
+vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -28,7 +28,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,10 +53,11 @@ import com.example.kaydensdigitalassistant.ui.theme.BlueEnd
 import com.example.kaydensdigitalassistant.ui.theme.BlueStart
 import com.example.kaydensdigitalassistant.ui.theme.errorMessageBackground
 import com.example.kaydensdigitalassistant.ui.theme.errorMessageBorder
-import com.example.kaydensdigitalassistant.font_archivo
 
 @Composable
-fun Admin_LogIn(modifier: Modifier, backgroundColor: Color, navController: NavController, isAdminLoggedIn: MutableState<Boolean>){
+fun Admin_LogIn(modifier: Modifier, backgroundColor: Color, navController: NavController){
+    val userRoleViewmodel = LocalUserRoleViewModel.current
+
     var username: String by remember{
         mutableStateOf("")
     }
@@ -185,7 +186,7 @@ fun Admin_LogIn(modifier: Modifier, backgroundColor: Color, navController: NavCo
 
                 }
 
-                WindowLink(navController, "FORGOT PASSWORD", "home", 15)
+                WindowLink(navController, "FORGOT PASSWORD", "resetPassword", 15)
 
                 Row(modifier = Modifier
                     .fillMaxWidth(),
@@ -194,7 +195,7 @@ fun Admin_LogIn(modifier: Modifier, backgroundColor: Color, navController: NavCo
                     Button(
                         onClick = {
                             if(username == "admin" && password == "admin"){
-                                isAdminLoggedIn.value = true
+                                userRoleViewmodel.setAdminStatus(true)
                                 navController.navigate("receipt")
                             }
                             else{

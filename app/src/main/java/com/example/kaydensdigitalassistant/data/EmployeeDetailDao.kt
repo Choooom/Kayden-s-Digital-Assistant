@@ -6,11 +6,12 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface EmployeeDetailDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertEmployee(employee: EmployeeDetail): Long
 
     @Query("SELECT * FROM employee_details WHERE username = :username AND password = :password")
@@ -18,4 +19,11 @@ interface EmployeeDetailDao {
 
     @Query("SELECT * FROM employee_details")
     fun getAllEmployees(): Flow<List<EmployeeDetail>>
+
+    @Update
+    suspend fun updateEmployee(employee: EmployeeDetail)
+
+    @Delete
+    suspend fun deleteEmployee(employee: EmployeeDetail)
+
 }

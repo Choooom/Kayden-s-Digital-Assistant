@@ -39,6 +39,14 @@ class ProductsViewModel(private val repository: ProductsRepository) : ViewModel(
         }
     }
 
+    fun updateProduct(product: Products) = viewModelScope.launch {
+        repository.updateProduct(product)
+    }
+
+    fun deleteProduct(product: Products) = viewModelScope.launch {
+        repository.deleteProduct(product)
+    }
+
     class ProductsViewModelFactory(private val repository: ProductsRepository) :
         ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -68,5 +76,13 @@ class ProductsRepository(private val productsDao: ProductsDao) {
 
     suspend fun getProductsIconByName(productName: String): Bitmap? {
         return productsDao.getProductsIconByName(productName)
+    }
+
+    suspend fun updateProduct(product: Products) {
+        productsDao.updateProduct(product)
+    }
+
+    suspend fun deleteProduct(product: Products) {
+        productsDao.deleteProduct(product)
     }
 }

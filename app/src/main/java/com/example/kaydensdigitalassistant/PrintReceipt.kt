@@ -104,18 +104,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
                     modifier = Modifier.clickable { navController.popBackStack() }
                 )
             }
-            Text(
-                text = "RECEIPT",
-                fontFamily = kanit_bold,
-                fontWeight = FontWeight.Bold,
-                fontSize = 30.sp,
-                color = Color.White
-            )
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = "Profile",
-                modifier = Modifier.size(40.dp)
-            )
+            TopBar(navController = navController, "RECEIPT")
         }
         Row(
             modifier = Modifier

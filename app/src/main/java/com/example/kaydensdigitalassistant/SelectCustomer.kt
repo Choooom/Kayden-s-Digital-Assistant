@@ -124,7 +124,7 @@ fun SelectCustomer(navController: NavController){
                 isClosed = true
                 receiptViewModel.receiptItemsState.clear()
                 navController.navigate("receipt")
-            })
+            }, navController = navController)
         }
 
         if (isNewCustomer && !isClosed) {
@@ -142,7 +142,7 @@ fun SelectCustomer(navController: NavController){
 }
 
 @Composable
-fun SelectOldCustomer(onClose: () -> Unit, customerPicked: (CustomerDetail) -> Unit) {
+fun SelectOldCustomer(onClose: () -> Unit, customerPicked: (CustomerDetail) -> Unit, navController: NavController) {
     val customerViewModel = LocalCustomerViewModel.current
     val customerDetails by customerViewModel.customerDetails.collectAsState(initial = emptyList())
     var searchQuery by remember { mutableStateOf("") }
@@ -244,11 +244,14 @@ fun SelectOldCustomer(onClose: () -> Unit, customerPicked: (CustomerDetail) -> U
                         CustomerItem(
                             name = customer.name,
                             contact = customer.contactNumber,
-                            address = customer.address
-                        ){
-                            customerViewModel.searchAndUpdateCustomer(customer.name)
-                            customerPicked(customer)
-                        }
+                            address = customer.address,
+                            customerId = customer.customerId,
+                            isSelected = {
+                                customerViewModel.searchAndUpdateCustomer(customer.name)
+                                customerPicked(customer)
+                            },
+                            navController = navController
+                        )
                     }
                 }
             }
@@ -458,9 +461,12 @@ fun CustomerItem(
     name: String,
     contact: String,
     address: String,
-    isSelected: () -> Unit
+    customerId: Long,  // Add customerId parameter
+    isSelected: () -> Unit,
+    navController: NavController  // Add NavController
 ) {
     val customerDetail = LocalCustomerViewModel.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -469,35 +475,50 @@ fun CustomerItem(
                 isSelected()
                 customerDetail.setCurrentCustomer(CustomerDetail(name = name, address = address, contactNumber = contact))
             },
-        horizontalArrangement = Arrangement.Start,
+        horizontalArrangement = Arrangement.SpaceBetween,  // Changed to SpaceBetween
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Default icon as face_man
-        Icon(
-            painter = painterResource(id = R.drawable.face_man),
-            contentDescription = "Icon",
-            modifier = Modifier.size(35.dp)
-        )
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.Center
+        Row(
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            var detailText = buildAnnotatedString {
-                withStyle(SpanStyle(fontSize = 15.sp, fontFamily = font_notosans_bold)) {
-                    append("$name\n")
+            Icon(
+                painter = painterResource(id = R.drawable.face_man),
+                contentDescription = "Icon",
+                modifier = Modifier.size(35.dp)
+            )
+
+            Column(
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.Center
+            ) {
+                var detailText = buildAnnotatedString {
+                    withStyle(SpanStyle(fontSize = 15.sp, fontFamily = font_notosans_bold)) {
+                        append("$name\n")
+                    }
+                    withStyle(SpanStyle(fontSize = 10.sp, fontFamily = font_notosans_regular)) {
+                        append("$contact\n")
+                        append(address)
+                    }
                 }
-                withStyle(SpanStyle(fontSize = 10.sp, fontFamily = font_notosans_regular)) {
-                    append("$contact\n")
-                    append(address)
-                }
+                Text(
+                    text = detailText,
+                    color = Color.Black,
+                    style = TextStyle(lineHeight = 13.sp),
+                    modifier = Modifier.padding(start = 5.dp)
+                )
             }
-            Text(
-                text = detailText,
-                color = Color.Black,
-                style = TextStyle(lineHeight = 13.sp),
-                modifier = Modifier.padding(start = 5.dp)
+        }
+
+        // Location Icon
+        IconButton(
+            onClick = { navController.navigate("maps/$customerId") }
+        ) {
+            Icon(
+                imageVector = Icons.Default.LocationOn,
+                contentDescription = "View Location",
+                tint = BlueEnd
             )
         }
     }
 }
+

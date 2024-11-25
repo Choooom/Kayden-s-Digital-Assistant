@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
 class CustomerDetailViewModel(private val repository: CustomerRepository) : ViewModel() {
+    val allCustomers: LiveData<List<CustomerDetail>> = repository.allCustomers.asLiveData()
+    
     private val _sortOrder = MutableStateFlow(SortOrder.NONE)
     val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
     private val dao: CustomerDetailDao = AppDatabase.getInstance(Application()).customerDetailDao()
@@ -119,6 +121,18 @@ class CustomerDetailViewModel(private val repository: CustomerRepository) : View
         return repository.getCustomerByCustomerId(customerId)
     }
 
+    fun deleteCustomer(customer: CustomerDetail) = viewModelScope.launch {
+        repository.deleteCustomer(customer)
+    }
+
+    fun showCustomerLocation(customer: CustomerDetail) {
+
+    }
+
+    fun updateCustomer(customer: CustomerDetail) = viewModelScope.launch {
+        repository.updateCustomer(customer)
+    }
+
     // Enum class to handle sorting order
     enum class SortOrder {
         NONE,
@@ -147,6 +161,14 @@ class CustomerRepository(private val customerDetailDao: CustomerDetailDao) {
     fun getCustomersSortedByAddress() = customerDetailDao.getCustomersSortedByAddress()
 
     fun searchCustomers(query: String) = customerDetailDao.searchCustomers(query)
+
+    suspend fun updateCustomer(customer: CustomerDetail) {
+        customerDetailDao.updateCustomer(customer)
+    }
+
+    suspend fun deleteCustomer(customer: CustomerDetail) {
+        customerDetailDao.deleteCustomer(customer)
+    }
 
     suspend fun insertCustomer(customer: CustomerDetail): Long {
         return customerDetailDao.insertCustomer(customer)

@@ -69,6 +69,7 @@ import com.example.kaydensdigitalassistant.font_notosans_regular
 import com.example.kaydensdigitalassistant.kanit_bold
 
 
+
 @Composable
 fun GenerateReceipt(navController: NavController) {
     val insets = WindowInsets.systemBars.asPaddingValues()
@@ -80,6 +81,7 @@ fun GenerateReceipt(navController: NavController) {
     }
 
     val receiptViewModel = LocalReceiptViewModel.current
+
 
     val totalAmount by rememberUpdatedState(newValue = receiptViewModel.receiptItemsState.sumOf { it.amount * it.quantity })
 
@@ -108,17 +110,7 @@ fun GenerateReceipt(navController: NavController) {
                 )
             )
     ) {
-        Row(modifier = Modifier.fillMaxWidth().padding(0.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically){
-            Text(text = "RECEIPT",
-                fontFamily = kanit_bold,
-                fontWeight = FontWeight.Bold,
-                fontSize = 30.sp,
-                color = Color.White)
-            Spacer(modifier = Modifier.fillMaxWidth(0.26f))
-            Icon(painter = painterResource(id = R.drawable.face_man)
-                , contentDescription = "Profile",
-                modifier = Modifier.size(70.dp).padding(end = 15.dp).clickable {  },)
-        }
+        TopBar(navController = navController, "RECEIPT")
 
         Column(
             modifier = Modifier

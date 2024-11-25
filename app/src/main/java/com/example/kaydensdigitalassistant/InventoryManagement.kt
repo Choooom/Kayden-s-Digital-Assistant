@@ -23,17 +23,27 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -51,10 +61,13 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.example.kaydensdigitalassistant.data.Products
+import com.example.kaydensdigitalassistant.data.ProductsViewModel
 import com.example.kaydensdigitalassistant.ui.theme.BlueEnd
 import com.example.kaydensdigitalassistant.ui.theme.BlueStart
 import com.example.kaydensdigitalassistant.ui.theme.ButtonGreen
@@ -93,30 +106,7 @@ fun Inventory(navController: NavController) {
             .background(Brush.horizontalGradient(colors = listOf(BlueStart, BlueEnd))),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(0.dp),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "INVENTORY",
-                fontFamily = kanit_bold,
-                fontWeight = FontWeight.Bold,
-                fontSize = 30.sp,
-                color = Color.White
-            )
-            Spacer(modifier = Modifier.fillMaxWidth(0.21f))
-            Icon(
-                painter = painterResource(id = R.drawable.face_man),
-                contentDescription = "Profile",
-                modifier = Modifier
-                    .size(70.dp)
-                    .padding(end = 15.dp)
-                    .clickable { },
-            )
-        }
+        TopBar(navController = navController, "INVENTORY")
 
         Row(
             modifier = Modifier
@@ -205,7 +195,8 @@ fun Inventory(navController: NavController) {
                     InventoryItem(
                         name = product.productName,
                         amount = product.normalPrice,
-                        quantity = product.stock
+                        quantity = product.stock,
+                        product = product
                     )
                     HorizontalDivider(
                         thickness = 1.dp,
@@ -231,7 +222,8 @@ fun InventorySection(filteredProducts: List<Products>) {
             InventoryItem(
                 name = product.productName,
                 amount = product.normalPrice,
-                quantity = product.stock
+                quantity = product.stock,
+                product = product
             )
             viewModel.fetchProductIconByName(product.productName)
         }
@@ -244,6 +236,8 @@ fun InventoryItem(
     name: String,
     amount: Double,
     quantity: Double,
+    product: Products,
+    viewModel: ProductsViewModel = LocalProductsViewModel.current
 ) {
 
     val backgroundColor = when {
@@ -254,6 +248,12 @@ fun InventoryItem(
 
     val inventory = LocalReceiptViewModel.current
     val inventoryItems = inventory.productList
+
+    val userRoleViewModel = LocalUserRoleViewModel.current
+    val isAdmin by userRoleViewModel.isAdmin.collectAsState()
+
+    var showEditDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     val viewModel = LocalProductsViewModel.current
 
@@ -269,7 +269,6 @@ fun InventoryItem(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.CenterStart
     ) {
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -382,7 +381,7 @@ fun InventoryItem(
                     Column(
                         modifier = Modifier
                             .fillMaxHeight()
-                            .fillMaxWidth()
+                            .fillMaxWidth(0.8f)
                     ){
                         Row(
                             modifier = Modifier.fillMaxWidth()
@@ -425,6 +424,30 @@ fun InventoryItem(
                                 modifier = Modifier.padding(start = 2.dp))
                         }
                     }
+                    if (isAdmin) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxHeight().fillMaxWidth(), horizontalAlignment = Alignment.End,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            IconButton(onClick = { showEditDialog = true }) {
+                                Icon(
+                                    Icons.Default.Edit,
+                                    contentDescription = "Edit",
+                                    modifier = Modifier.size(20.dp),
+                                    tint = BlueStart
+                                )
+                            }
+                            IconButton(onClick = { showDeleteDialog = true }) {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = "Delete",
+                                    modifier = Modifier.size(20.dp),
+                                    tint = Red
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -437,5 +460,176 @@ fun InventoryItem(
                 .clip(RoundedCornerShape(10.dp))
                 .background(backgroundColor)
         )
+
+        if (showEditDialog) {
+            EditProductDialog(
+                product = product,
+                onDismiss = { showEditDialog = false },
+                viewModel = viewModel
+            )
+        }
+
+        if (showDeleteDialog) {
+            DeleteProductDialog(
+                product = product,
+                onDismiss = { showDeleteDialog = false },
+                viewModel = viewModel
+            )
+        }
+    }
+}
+
+@Composable
+fun EditProductDialog(
+    product: Products,
+    onDismiss: () -> Unit,
+    viewModel: ProductsViewModel
+) {
+    var name by remember { mutableStateOf(product.productName) }
+    var type by remember { mutableStateOf(product.type) }
+    var normalPrice by remember { mutableStateOf(product.normalPrice.toString()) }
+    var discountedPrice by remember { mutableStateOf(product.discountedPrice.toString()) }
+    var stock by remember { mutableStateOf(product.stock.toString()) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Edit Product Details",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Product Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = type,
+                    onValueChange = { type = it },
+                    label = { Text("Type") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = normalPrice,
+                    onValueChange = { normalPrice = it },
+                    label = { Text("Normal Price") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = discountedPrice,
+                    onValueChange = { discountedPrice = it },
+                    label = { Text("Discounted Price") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = stock,
+                    onValueChange = { stock = it },
+                    label = { Text("Stock") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        val updatedProduct = product.copy(
+                            productName = name,
+                            type = type,
+                            normalPrice = normalPrice.toDoubleOrNull() ?: 0.0,
+                            discountedPrice = discountedPrice.toDoubleOrNull() ?: 0.0,
+                            stock = stock.toDoubleOrNull() ?: 0.0
+                        )
+                        viewModel.updateProduct(updatedProduct)
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Save Changes")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DeleteProductDialog(
+    product: Products,
+    onDismiss: () -> Unit,
+    viewModel: ProductsViewModel
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Delete Product",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Text(
+                    text = "Are you sure you want to delete ${product.productName}?",
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                    ) {
+                        Text("Cancel")
+                    }
+                    Button(
+                        onClick = {
+                            viewModel.deleteProduct(product)
+                            onDismiss()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                    ) {
+                        Text("Delete")
+                    }
+                }
+            }
+        }
     }
 }

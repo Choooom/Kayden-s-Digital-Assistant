@@ -6,6 +6,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
@@ -30,4 +31,9 @@ interface CustomerDetailDao {
     @Query("SELECT * FROM customer_details WHERE name LIKE '%' || :searchQuery || '%' OR address LIKE '%' || :searchQuery || '%'")
     fun searchCustomers(searchQuery: String): Flow<List<CustomerDetail>>
 
+    @Update
+    suspend fun updateCustomer(customer: CustomerDetail)
+
+    @Delete
+    suspend fun deleteCustomer(customer: CustomerDetail)
 }
