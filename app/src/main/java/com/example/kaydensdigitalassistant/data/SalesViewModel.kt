@@ -121,6 +121,11 @@ class SalesItemViewModel(private val repository: SalesItemRepository) : ViewMode
         }
     }
 
+    fun getProductSalesCount(): Flow<List<ProductSaleCount>> {
+        return repository.getProductSalesCount()
+    }
+
+
     class SalesItemViewModelFactory(private val repository: SalesItemRepository) :
         ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -151,4 +156,9 @@ class SalesItemRepository(private val salesItemDao: SalesItemDao) {
     fun getSalesByDate(date: String): Flow<List<SalesItem>> {
         return salesItemDao.getSalesByDate(date)
     }
+
+    fun getProductSalesCount(): Flow<List<ProductSaleCount>> {
+        return salesItemDao.getProductSalesCount()
+    }
+
 }

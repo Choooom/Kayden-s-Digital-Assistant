@@ -42,7 +42,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.vico.compose)
     implementation(libs.vico.compose.m3)
 

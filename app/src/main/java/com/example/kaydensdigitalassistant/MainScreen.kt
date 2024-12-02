@@ -1,5 +1,7 @@
 package com.example.kaydensdigitalassistant
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -40,7 +42,7 @@ fun MainScreen() {
     val isAdmin by userRoleViewModel.isAdmin.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        NavHost(navController = navController, startDestination = "login", modifier = Modifier.weight(1f)) {
+        NavHost(navController = navController, startDestination = "salesTracking", modifier = Modifier.weight(1f)) {
 
             composable("login") {
                 LogIn(
@@ -80,10 +82,14 @@ fun MainScreen() {
             }
 
             composable("confirmReceipt"){
-                ConfirmPurchase(navController = navController, "")
+                ConfirmPurchase(navController = navController, "","")
             }
 
-            composable("inventory"){
+            composable(
+                "inventory",
+                enterTransition = { fadeIn() },
+                exitTransition = { fadeOut() }
+            ) {
                 Inventory(navController = navController)
             }
 
@@ -131,7 +137,7 @@ fun MainScreen() {
             composable("resetPassword") {
                 PasswordResetScreen(navController = navController)
             }
-
+/*
             composable(
                 route = "customerLocation/{customerId}",
                 arguments = listOf(navArgument("customerId") { type = NavType.LongType })
@@ -139,7 +145,8 @@ fun MainScreen() {
                 val customerId = backStackEntry.arguments?.getLong("customerId") ?: return@composable
                 CustomerLocationScreen(navController = navController, customerId = customerId)
             }
-
+            di ko sure if nag cacause toh ng bug
+*/
             composable(
                 "map/{customerId}",
                 arguments = listOf(navArgument("customerId") { type = NavType.LongType })

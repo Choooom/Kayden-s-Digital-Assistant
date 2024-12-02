@@ -8,9 +8,7 @@ import com.example.kaydensdigitalassistant.data.ReceiptItem
 
 @Composable
 fun PrintToThermalPrinter(
-    businessName: String,
-    employeeId: String,
-    dateTime: String,
+    referenceNumber: String,
     customerAddress: String,
     paymentOption: String,
     receiptItems: List<ReceiptItem>,
@@ -21,7 +19,7 @@ fun PrintToThermalPrinter(
 
     val printString = buildString {
         append("<112>KAYDEN")
-        append("<110>Employee #023578")
+        append("<110>Ref. No.: $referenceNumber")
 
         append("<010>${CurrentDateTime()}")
 

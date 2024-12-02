@@ -17,5 +17,7 @@ data class SalesItem(
     val totalAmount: Double,
     val dateDelivered: String,
     val timeDelivered: String,
-    val paymentMethod: String//newly added
+    val paymentMethod: String,
+    //val paymentOption: String
+    // val referenceNumber: String
 )

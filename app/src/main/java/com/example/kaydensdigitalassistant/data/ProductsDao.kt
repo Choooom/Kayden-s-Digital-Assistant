@@ -32,4 +32,7 @@ interface ProductsDao {
 
     @Delete
     suspend fun deleteProduct(product: Products)
+
+    @Query("SELECT DISTINCT type FROM products ORDER BY type ASC")
+    fun getAllProductTypes(): Flow<List<String>>
 }

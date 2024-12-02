@@ -266,7 +266,7 @@ fun AddNewAccount(navController: NavController){
             }
         }
         Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back Arrow",
-            modifier = Modifier.align(Alignment.TopStart).padding(start = 10.dp, top = 20.dp))
+            modifier = Modifier.align(Alignment.TopStart).padding(start = 10.dp, top = 20.dp).clickable { navController.navigate("manageAccounts") })
         if(errorMessage){
             PopOffMessage(
                 message = "Invalid username and/or password",

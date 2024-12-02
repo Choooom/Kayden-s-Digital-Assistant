@@ -89,7 +89,7 @@ fun Inventory(navController: NavController) {
     var searchQuery by remember { mutableStateOf("") }
     var isTypeMenuExpanded by remember { mutableStateOf(false) }
 
-    val productTypes = listOf("Beer", "BeerFlavored", "Softdrink", "Energy-Drink")
+    val productTypes by productsViewModel.productTypes.collectAsState()
 
     val filteredProducts = allProducts.filter {
         (itemType == "All" || it.type == itemType) &&
@@ -124,7 +124,7 @@ fun Inventory(navController: NavController) {
                 fontFamily = font_abeezee,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
-                modifier = Modifier.padding(start = 15.dp)
+                modifier = Modifier.padding(start = 15.dp).clickable { isTypeMenuExpanded = true }
             )
             Text(
                 text = itemType,
@@ -171,9 +171,9 @@ fun Inventory(navController: NavController) {
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                 singleLine = true,
                 modifier = Modifier
-                    .fillMaxWidth(0.9f)
+                    .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .height(48.dp),
+                    .height(55.dp),
                 colors = TextFieldDefaults.colors(
                     focusedIndicatorColor = BlueStart,
                     unfocusedIndicatorColor = dirtyWhite,
@@ -207,7 +207,6 @@ fun Inventory(navController: NavController) {
         }
     }
 }
-
 
 @Composable
 fun InventorySection(filteredProducts: List<Products>) {

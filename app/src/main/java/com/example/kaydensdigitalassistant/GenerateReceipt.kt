@@ -224,6 +224,9 @@ fun GenerateReceipt(navController: NavController) {
         }
     }
 
+    if(selectedPricingOption == "Discounted") receiptViewModel.isDiscounted = true
+    if(selectedPricingOption == "Regular") receiptViewModel.isDiscounted = false
+
     if(receiptViewModel.showProductList){
         ProductList(navController, onClose = { receiptViewModel.showProductList = false })
     }

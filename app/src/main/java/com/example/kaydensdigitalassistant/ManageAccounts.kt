@@ -55,14 +55,19 @@ import com.example.kaydensdigitalassistant.ui.theme.BlueEnd
 import com.example.kaydensdigitalassistant.ui.theme.BlueStart
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
+import androidx.compose.material3.Divider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.asFlow
 import com.example.kaydensdigitalassistant.data.CustomerDetail
 import com.example.kaydensdigitalassistant.data.CustomerDetailViewModel
 import com.example.kaydensdigitalassistant.data.EmployeeDetailViewModel
+import com.example.kaydensdigitalassistant.data.SalesItem
+import com.example.kaydensdigitalassistant.data.SalesItemViewModel
 
 
 @Composable
@@ -206,7 +211,6 @@ fun TableHeaderCell(text: String, width: Dp) {
         color = Color.White,
         modifier = Modifier
             .width(width)
-            .padding(horizontal = 2.dp)
     )
 }
 
@@ -253,10 +257,10 @@ fun EmployeeTable(
                     Row(
                         modifier = Modifier
                             .background(BlueStart)
-                            .padding(16.dp)
+                            .padding(top = 16.dp, bottom = 16.dp, start = 10.dp)
                     ) {
                         TableHeaderCell("Name", nameWidth)
-                        TableHeaderCell("Employee #", idWidth)
+                        TableHeaderCell("Account Number", idWidth)
                         TableHeaderCell("Email", emailWidth)
                         TableHeaderCell("Password", phoneWidth)
                         TableHeaderCell("Action", actionWidth)
@@ -465,7 +469,8 @@ fun TableActionCell(
 
     Box {
         IconButton(
-            onClick = { expanded = true }
+            onClick = { expanded = true },
+            modifier = Modifier.size(20.dp).align(Alignment.TopCenter)
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.cog),
@@ -514,6 +519,7 @@ fun CustomerTable(
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showLocation by remember{ mutableStateOf(false) }
+    var showOrdersDialog by remember { mutableStateOf(false) }
 
     LazyRow(
         modifier = Modifier
@@ -529,10 +535,10 @@ fun CustomerTable(
                     Row(
                         modifier = Modifier
                             .background(BlueStart)
-                            .padding(16.dp)
+                            .padding(top = 16.dp, bottom = 16.dp, start = 10.dp)
                     ) {
                         TableHeaderCell("Name", nameWidth)
-                        TableHeaderCell("Customer #", idWidth)
+                        TableHeaderCell("Account Number", idWidth)
                         TableHeaderCell("Address", addressWidth)
                         TableHeaderCell("Contact", contactWidth)
                         TableHeaderCell("Action", actionWidth)
@@ -563,6 +569,10 @@ fun CustomerTable(
                                 onLocation = {
                                     selectedCustomer = customer
                                     showLocation = true
+                                },
+                                onOrders = {
+                                    selectedCustomer = customer
+                                    showOrdersDialog = true
                                 }
                             )
                         }
@@ -592,6 +602,14 @@ fun CustomerTable(
         navController.navigate("map/${selectedCustomer!!.customerId}")
         showLocation = false
     }
+
+    if (showOrdersDialog && selectedCustomer != null) {
+        CustomerOrdersDialog(
+            customer = selectedCustomer!!,
+            onDismiss = { showOrdersDialog = false },
+            salesViewModel = LocalSalesViewModel.current
+        )
+    }
 }
 
 @Composable
@@ -599,7 +617,8 @@ fun CustomerActionCell(
     customer: CustomerDetail,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    onLocation: () -> Unit
+    onLocation: () -> Unit,
+    onOrders: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -608,7 +627,7 @@ fun CustomerActionCell(
             Icon(
                 painter = painterResource(id = R.drawable.cog),
                 contentDescription = "Action",
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.dp).align(Alignment.TopCenter)
             )
         }
 
@@ -616,6 +635,13 @@ fun CustomerActionCell(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
+            DropdownMenuItem(
+                text = { Text("Orders") },
+                onClick = {
+                    expanded = false
+                    onOrders()
+                }
+            )
             DropdownMenuItem(
                 text = { Text("Edit") },
                 onClick = {
@@ -640,6 +666,7 @@ fun CustomerActionCell(
         }
     }
 }
+
 
 
 @Composable
@@ -774,3 +801,92 @@ fun DeleteCustomerDialog(
         }
     }
 }
+
+@Composable
+fun CustomerOrdersDialog(
+    customer: CustomerDetail,
+    onDismiss: () -> Unit,
+    salesViewModel: SalesItemViewModel
+) {
+    val customerOrders by salesViewModel.getSalesItemsByCustomer(customer.customerId)
+        .asFlow()
+        .collectAsState(initial = emptyList())
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.8f)
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = "${customer.name}'s Orders",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                LazyColumn {
+                    items(customerOrders) { order ->
+                        OrderItem(order = order)
+                        Divider()
+                    }
+                }
+
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                ) {
+                    Text("Close")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OrderItem(order: SalesItem) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Text(
+            text = "Date: ${order.dateDelivered}",
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Text(
+            text = "Time: ${order.timeDelivered}",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Text(
+            text = "Payment Method: ${order.paymentMethod}",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Text(
+            text = "Total Amount: ₱${order.totalAmount}",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            text = "Order Details:",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+        order.orderDetails.forEach { item ->
+            Text(
+                text = "• ${item.name} x${item.quantity} - ₱${item.amount}",
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+

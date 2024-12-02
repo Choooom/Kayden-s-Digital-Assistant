@@ -1,5 +1,7 @@
 package com.example.kaydensdigitalassistant
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -44,6 +46,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -56,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.kaydensdigitalassistant.data.CustomerDetail
 import com.example.kaydensdigitalassistant.data.CustomerDetailViewModel
+import com.example.kaydensdigitalassistant.data.Products
 import com.example.kaydensdigitalassistant.ui.theme.BlueEnd
 import com.example.kaydensdigitalassistant.ui.theme.BlueStart
 import com.example.kaydensdigitalassistant.ui.theme.SkyBlue
@@ -75,6 +79,39 @@ fun SelectCustomer(navController: NavController){
         val appViewModel = LocalAppViewModel.current
         appViewModel.clearAllData()
    */
+/*
+    val productViewModel = LocalProductsViewModel.current
+    val context = LocalContext.current
+
+    fun getBitmap(drawableId: Int): Bitmap {
+        return BitmapFactory.decodeResource(context.resources, drawableId)
+    }
+
+    val productsList = listOf(
+        Products(productName = "Red Horse 1000 ML (Mucho)", type = "Beer", normalPrice = 630.0, discountedPrice = 628.0, stock = 100.0, productIcon = getBitmap(R.drawable.mucho)),
+        Products(productName = "Red Horse 500 ML", type = "Beer", normalPrice = 620.0, discountedPrice = 615.0, stock = 100.0, productIcon = getBitmap(R.drawable.redhorse_500)),
+        Products(productName = "Red Horse 330 ML (Stallion)", type = "Beer", normalPrice = 860.0, discountedPrice = 853.0, stock = 100.0, productIcon = getBitmap(R.drawable.stallion)),
+        Products(productName = "Pale Pilsen 1000 ML (Grande)", type = "Beer", normalPrice = 550.0, discountedPrice = 544.0, stock = 100.0, productIcon = getBitmap(R.drawable.grande)),
+        Products(productName = "Pale Pilsen 320 ML", type = "Beer", normalPrice = 820.0, discountedPrice = 800.0, stock = 100.0, productIcon = getBitmap(R.drawable.pilsen_small)),
+        Products(productName = "San Mig Light 330 ML", type = "Beer", normalPrice = 1040.0, discountedPrice = 1020.0, stock = 100.0, productIcon = getBitmap(R.drawable.sanmig_light)),
+        Products(productName = "San Mig Apple 330 ML", type = "Beer", normalPrice = 800.0, discountedPrice = 778.0, stock = 100.0, productIcon = getBitmap(R.drawable.sanmig_apple)),
+        Products(productName = "RC Original Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.rc_small)),
+        Products(productName = "RC Orange Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.orange_small)),
+        Products(productName = "RC Lemon Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.lemon_small)),
+        Products(productName = "RC Root Beer Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.rootbeer_small)),
+        Products(productName = "RC Mega Original 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.rc_mega)),
+        Products(productName = "RC Mega Orange 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.orange_mega)),
+        Products(productName = "RC Mega Lemon 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.lemon_mega)),
+        Products(productName = "Cobra Original (Yellow) 240 ML", type = "Energy-Drink", normalPrice = 300.0, discountedPrice = 295.0, stock = 100.0, productIcon = getBitmap(R.drawable.cobra_yellow)),
+        Products(productName = "Cobra Citrus (Green) 240 ML", type = "Energy-Drink", normalPrice = 300.0, discountedPrice = 295.0, stock = 100.0, productIcon = getBitmap(R.drawable.cobra_green))
+    )
+
+    LaunchedEffect(key1 = Unit) {
+        productsList.forEach { product ->
+            productViewModel.insertProduct(product)
+        }
+    }
+*/
 
     Box(
         modifier = Modifier

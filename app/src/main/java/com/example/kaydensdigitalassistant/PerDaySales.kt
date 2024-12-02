@@ -68,6 +68,7 @@ fun PerDaySale(navController: NavController) {
     var showTodayVsYesterdayChart by remember { mutableStateOf(false) }
     var showProfitChart by remember { mutableStateOf(false) }
     var showNumberOfSalesChart by remember { mutableStateOf(false) }
+    var showProductSalesChart by remember { mutableStateOf(false) }
 
     val todayVsYesterdayData by salesViewModel.getTodayVsYesterdaySales().collectAsState(initial = Pair(0.0, 0.0))
     val salesDifference = (todayVsYesterdayData.first - todayVsYesterdayData.second).toInt()
@@ -141,7 +142,8 @@ fun PerDaySale(navController: NavController) {
                         text = "₱ ${formatter.format(totalSalesAmount.toInt())}",
                         fontFamily = font_archivo_bold,
                         fontSize = 45.sp,
-                        color = Color.White
+                        color = Color.White,
+                        modifier = Modifier.clickable { showProductSalesChart = true}
                     )
                 }
 
@@ -368,6 +370,17 @@ fun PerDaySale(navController: NavController) {
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     NumberOfSalesChart(salesViewModel)
+                }
+            }
+        }
+
+        if(showProductSalesChart){
+            Dialog(onDismissRequest = { showProductSalesChart = false }) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    ProductSalesChart(salesViewModel)
                 }
             }
         }

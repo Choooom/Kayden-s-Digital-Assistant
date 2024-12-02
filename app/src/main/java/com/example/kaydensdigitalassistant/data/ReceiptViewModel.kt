@@ -8,15 +8,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.room.util.copy
 import com.example.kaydensdigitalassistant.GenerateReceipt
 import com.example.kaydensdigitalassistant.LocalCustomerViewModel
+import com.example.kaydensdigitalassistant.LocalProductsViewModel
 import com.example.kaydensdigitalassistant.LocalReceiptViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 
-class ReceiptViewModel  : ViewModel() {
+class ReceiptViewModel(private val productsViewModel: ProductsViewModel)  : ViewModel() {
+
+
     var receiptItemsState = mutableStateListOf<ReceiptItem>()
-    val productList = mutableStateListOf<InventoryItems>()
+    private val _productList = MutableStateFlow<List<Products>>(emptyList())
+    val productList = _productList.asStateFlow()
+
+    var isDiscounted by mutableStateOf(false)
+
     var customerPreference = mutableStateListOf<CustomerPreference>()
 
     var showProductList by mutableStateOf(false)
@@ -37,27 +48,11 @@ class ReceiptViewModel  : ViewModel() {
     }
 
     init {
-        productList.addAll(listOf(
-            // Beer
-            InventoryItems("Red Horse 1000 ML (Mucho)", "Beer", 640.0, 100.0),
-            InventoryItems("Red Horse 500 ML", "Beer", 628.0, 100.0),
-            InventoryItems("Red Horse 330 ML (Stallion)", "Beer", 945.0, 11.0),
-            InventoryItems("Pale Pilsen 1000 ML (Grande)", "Beer", 610.0, 100.0),
-            InventoryItems("Pale Pilsen 320 ML", "Beer", 880.0, 10.0),
-            InventoryItems("San Mig Light 330 ML", "BeerFlavored", 1035.0, 100.0),
-            InventoryItems("San Mig Apple 330 ML", "BeerFlavored", 860.0, 100.0),
-            // Softdrink
-            InventoryItems("RC Original Small 240 ML", "Softdrink", 174.0, 100.0),
-            InventoryItems("RC Orange Small 240 ML", "Softdrink", 174.0, 340.0),
-            InventoryItems("RC Lemon Small 240 ML", "Softdrink", 174.0, 60.0),
-            InventoryItems("RC Root Beer Small 240 ML", "Softdrink", 174.0, 100.0),
-            InventoryItems("RC Mega Original 800 ML", "Softdrink", 260.0, 40.0),
-            InventoryItems("RC Mega Orange 800 ML", "Softdrink", 260.0, 2.0),
-            InventoryItems("RC Mega Lemon 800 ML", "Softdrink", 260.0, 100.0),
-            // Energy Drinks
-            InventoryItems("Cobra Original (Yellow) 240 ML", "Energy-Drink", 300.0, 10.0),
-            InventoryItems("Cobra Citrus (Green) 240 ML", "Energy-Drink", 300.0, 23.0),
-        ))
+        viewModelScope.launch {
+            productsViewModel.productsState.collect { products ->
+                _productList.value = products
+            }
+        }
     }
 
     fun initializeReceiptItem(item: List<ReceiptItem>) {
@@ -92,22 +87,33 @@ class ReceiptViewModel  : ViewModel() {
     }
 
     fun addItem(product: String, type: String) {
-        if (currentIndex in receiptItemsState.indices) {
-            val productItem = productList.find { it.name == product && it.type == type }
-            if (productItem != null) {
-                val currentItem = receiptItemsState[currentIndex]
-                val newReceiptItemsState = receiptItemsState.toMutableList()
-                receiptItemsState[currentIndex] = receiptItemsState[currentIndex].copy(
-                    name = productItem.name,
+        val productItem = _productList.value.find { it.productName == product && it.type == type }
+
+        if (productItem != null) {
+            if (currentIndex in receiptItemsState.indices) {
+                // Update existing item at currentIndex
+                receiptItemsState[currentIndex] = ReceiptItem(
+                    name = productItem.productName,
                     type = productItem.type,
-                    amount = productItem.price,
+                    amount = if(isDiscounted) productItem.discountedPrice else productItem.normalPrice,
                     quantity = 0.0
                 )
+            } else {
+                // Add new item to the list
+                receiptItemsState.add(
+                    ReceiptItem(
+                        name = productItem.productName,
+                        type = productItem.type,
+                        amount = if(isDiscounted) productItem.discountedPrice else productItem.normalPrice,
+                        quantity = 0.0
+                    )
+                )
+                currentIndex = receiptItemsState.lastIndex
             }
         }
-        println(receiptItemsState[currentIndex])
-        println(getReceiptList())
     }
+
+
 
     fun addQuantity(quantity: Double, index: Int) {
         if (index in receiptItemsState.indices) {
@@ -120,21 +126,6 @@ class ReceiptViewModel  : ViewModel() {
         receiptItemsState.removeAt(index)
     }
 
-    fun updateInventory(viewModel: ReceiptViewModel){
-        val inventory = viewModel.productList
-        val receipt = viewModel.receiptItemsState
-        println(receipt[1].name)
-
-        for (receiptItem in receipt) {
-
-            val matchingInventoryItem = inventory.firstOrNull { it.name == receiptItem.name }
-
-            matchingInventoryItem?.let {
-                it.stock -= receiptItem.quantity
-                println("Product: ${it.name}, Stock: ${it.stock}")
-            }
-        }
-    }
 
     fun preferenceAvailable(customer: CustomerDetail?): Boolean{
         val existingCustomer = customerPreference.find {

@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -28,7 +32,10 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +45,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -54,16 +63,31 @@ import com.example.kaydensdigitalassistant.font_notosans_bold
 import com.example.kaydensdigitalassistant.font_notosans_regular
 
 @Composable
-fun ProductList(navController: NavController, onClose : () -> Unit){
-    val viewModel = LocalReceiptViewModel.current
+fun ProductList(navController: NavController, onClose: () -> Unit) {
+    val receiptViewModel = LocalReceiptViewModel.current
+    val productsViewModel = LocalProductsViewModel.current
 
-    var selectedCategory by remember { mutableStateOf(mutableStateListOf(true, false, false, false)) }
+    val products by productsViewModel.productsState.collectAsState()
+    val productTypes by productsViewModel.productTypes.collectAsState()
+
+    var selectedType by remember { mutableStateOf("All") }
     var searchQuery by remember { mutableStateOf("") }
+
+    val filteredProducts = when (selectedType) {
+        "All" -> products.filter { product ->
+            searchQuery.isEmpty() || product.productName.contains(searchQuery, ignoreCase = true)
+        }
+        else -> products.filter { product ->
+            product.type == selectedType &&
+                    (searchQuery.isEmpty() || product.productName.contains(searchQuery, ignoreCase = true))
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.5f)),
+            .background(Color.Black.copy(alpha = 0.5f))
+            .clickable { onClose() },
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -71,94 +95,89 @@ fun ProductList(navController: NavController, onClose : () -> Unit){
                 .fillMaxWidth()
                 .fillMaxHeight(0.6f)
                 .background(Color.White)
-        ){
-            Row(modifier = Modifier.fillMaxWidth()){
+        ) {
+            Row(modifier = Modifier.fillMaxWidth()) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Close",
                     modifier = Modifier
                         .padding(start = 10.dp, top = 10.dp)
-                        .clickable {
-                            onClose()
-                        }
+                        .clickable { onClose() }
                 )
             }
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 10.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ){
-                Text(
-                    text = "Beers",
-                    fontSize = 18.sp,
+                    .horizontalScroll(rememberScrollState())
+                    .padding(top = 10.dp)
+            ) {
+                // First four items with even spacing
+                Row(
                     modifier = Modifier
-                        .clickable {
-                            selectedCategory[0] = true
-                            selectedCategory[1] = false
-                            selectedCategory[2] = false
-                            selectedCategory[3] = false
-                        },
-                    fontFamily = if(selectedCategory[0] == true) font_notosans_bold else font_notosans_regular,
-                    style = TextStyle(
-                        textDecoration = if(selectedCategory[0] == true) TextDecoration.Underline else TextDecoration.None)
-                )
-                Text(
-                    text = "Softdrinks",
-                    fontSize = 18.sp,
-                    modifier = Modifier
-                        .clickable {
-                            selectedCategory[0] = false
-                            selectedCategory[1] = true
-                            selectedCategory[2] = false
-                            selectedCategory[3] = false
-                        },
-                    fontFamily = if(selectedCategory[1] == true) font_notosans_bold else font_notosans_regular,
-                    style = TextStyle(textDecoration = if(selectedCategory[1] == true) TextDecoration.Underline else TextDecoration.None)
-                )
-                Text(
-                    text = "Energy Drinks",
-                    fontSize = 18.sp,
-                    modifier = Modifier
-                        .clickable {
-                            selectedCategory[0] = false
-                            selectedCategory[1] = false
-                            selectedCategory[2] = true
-                            selectedCategory[3] = false
-                        },
-                    fontFamily = if(selectedCategory[2] == true) font_notosans_bold else font_notosans_regular,
-                    style = TextStyle(textDecoration = if(selectedCategory[2] == true) TextDecoration.Underline else TextDecoration.None)
-                )
-                Text(
-                    text = "ETC",
-                    fontSize = 18.sp,
-                    modifier = Modifier
-                        .clickable {
-                            selectedCategory[0] = false
-                            selectedCategory[1] = false
-                            selectedCategory[2] = false
-                            selectedCategory[3] = true
-                        },
-                    fontFamily = if(selectedCategory[3] == true) font_notosans_bold else font_notosans_regular,
-                    style = TextStyle(textDecoration = if(selectedCategory[3] == true) TextDecoration.Underline else TextDecoration.None)
-                )
+                        .width(LocalConfiguration.current.screenWidthDp.dp)
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    // "All" type
+                    Text(
+                        text = "All",
+                        fontSize = 18.sp,
+                        modifier = Modifier.clickable { selectedType = "All" },
+                        fontFamily = if(selectedType == "All") font_notosans_bold else font_notosans_regular,
+                        style = TextStyle(
+                            textDecoration = if(selectedType == "All") TextDecoration.Underline else TextDecoration.None
+                        )
+                    )
+
+                    // First three product types
+                    productTypes.take(3).forEach { type ->
+                        Text(
+                            text = type,
+                            fontSize = 18.sp,
+                            modifier = Modifier.clickable { selectedType = type },
+                            fontFamily = if(selectedType == type) font_notosans_bold else font_notosans_regular,
+                            style = TextStyle(
+                                textDecoration = if(selectedType == type) TextDecoration.Underline else TextDecoration.None
+                            )
+                        )
+                    }
+                }
+
+                // Additional types with consistent spacing
+                Row(
+                    modifier = Modifier.padding(end = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    productTypes.drop(3).forEach { type ->
+                        Text(
+                            text = type,
+                            fontSize = 18.sp,
+                            modifier = Modifier.clickable { selectedType = type },
+                            fontFamily = if(selectedType == type) font_notosans_bold else font_notosans_regular,
+                            style = TextStyle(
+                                textDecoration = if(selectedType == type) TextDecoration.Underline else TextDecoration.None
+                            )
+                        )
+                    }
+                }
             }
+
+
             Spacer(modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 7.dp)
                 .height(5.dp)
-                .background(
-                    Brush.linearGradient(colors = listOf(BlueStart, BlueEnd))
-                )
+                .background(Brush.linearGradient(colors = listOf(BlueStart, BlueEnd)))
             )
 
-            Row(modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp, start = 10.dp, end = 10.dp),
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp, start = 10.dp, end = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically)
-            {
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     text = "PRODUCTS",
                     fontFamily = font_notosans_bold,
@@ -167,21 +186,39 @@ fun ProductList(navController: NavController, onClose : () -> Unit){
                 SearchBar(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    onSearch = {
-
-                    },
+                    onSearch = { },
                     modifier = Modifier.border(1.dp, Color.Black, RoundedCornerShape(20.dp))
                 )
             }
-            Column(modifier = Modifier.fillMaxSize()){
-                if(selectedCategory[0] == true){
-                    ProductColumn("Beer")
-                }else if(selectedCategory[1] == true){
-                    ProductColumn("Softdrink")
-                }else if(selectedCategory[2] == true){
-                    ProductColumn("Energy-Drink")
-                }else if(selectedCategory[3] == true){
-                    ProductColumn("BeerFlavored")
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp)
+            ) {
+                items(filteredProducts.chunked(2)) { pair ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp)
+                            .padding(vertical = 8.dp)
+                    ) {
+                        pair.forEach { product ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(horizontal = 8.dp)
+                            ) {
+                                InventoryItem(
+                                    name = product.productName,
+                                    type = product.type,
+                                    price = if(!receiptViewModel.isDiscounted) product.normalPrice else product.discountedPrice,
+                                )
+                            }
+                        }
+                        if (pair.size == 1) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
                 }
             }
         }
@@ -251,64 +288,17 @@ fun SearchBar(
     )
 }
 
-@Composable
-fun ProductColumn(type: String) {
-    val receiptViewModel = LocalReceiptViewModel.current
-    val filteredList = receiptViewModel.productList.filter { it.type == type }
-    val pairedList = filteredList.chunked(2) // Split into pairs
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp)
-    ) {
-        items(pairedList.size) { index ->
-            val pair = pairedList[index]
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp)
-                    .padding(vertical = 8.dp)
-            ) {
-                // First item with weight(1f)
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 8.dp)
-                ) {
-                    InventoryItem(
-                        name = pair[0].name,
-                        type = pair[0].type,
-                        price = pair[0].price,
-                        index = index
-                    )
-                }
-
-                // Second item or an empty Box if no second item in the pair
-                if (pair.size > 1) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = 8.dp)
-                    ) {
-                        InventoryItem(
-                            name = pair[1].name,
-                            type = pair[1].type,
-                            price = pair[1].price,
-                            index = index
-                        )
-                    }
-                } else {
-                    Spacer(modifier = Modifier.weight(1f)) // Empty space for odd items
-                }
-            }
-        }
-    }
-}
-
 
 @Composable
-fun InventoryItem(name: String, type: String, price:Double, index: Int){
+fun InventoryItem(name: String, type: String, price:Double){
     val viewModel = LocalReceiptViewModel.current
+    val productsViewModel = LocalProductsViewModel.current
+    val icon = productsViewModel.productIcons[name]
+
+    LaunchedEffect(name) {
+        productsViewModel.fetchProductIconByName(name)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -331,36 +321,28 @@ fun InventoryItem(name: String, type: String, price:Double, index: Int){
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ){
-                Image(
-                    painter = painterResource(
-                        when (name) {
-                            "Red Horse 1000 ML (Mucho)" -> R.drawable.mucho
-                            "Red Horse 500 ML" -> R.drawable.redhorse_500
-                            "Red Horse 330 ML (Stallion)" -> R.drawable.stallion
-                            "Pale Pilsen 1000 ML (Grande)" -> R.drawable.grande
-                            "Pale Pilsen 320 ML" -> R.drawable.pilsen_small
-                            "San Mig Light 330 ML" -> R.drawable.sanmig_light
-                            "San Mig Apple 330 ML" -> R.drawable.sanmig_apple
-                            "RC Original Small 240 ML" -> R.drawable.rc_small
-                            "RC Orange Small 240 ML" -> R.drawable.orange_small
-                            "RC Lemon Small 240 ML" -> R.drawable.lemon_small
-                            "RC Root Beer Small 240 ML" -> R.drawable.rootbeer_small
-                            "RC Mega Original 800 ML" -> R.drawable.rc_mega
-                            "RC Mega Orange 800 ML" -> R.drawable.orange_mega
-                            "RC Mega Lemon 800 ML" -> R.drawable.lemon_mega
-                            "Cobra Original (Yellow) 240 ML" -> R.drawable.cobra_yellow
-                            "Cobra Citrus (Green) 240 ML" -> R.drawable.cobra_green
-                            else -> R.drawable.plus
-                        }),
-                    contentDescription = name,
-                    modifier = Modifier
-                        .size(80.dp)
-                        .fillMaxWidth()
-                        .clickable {
-                            viewModel.addItem(name, type)
-                            viewModel.showProductList = false
-                        }
-                )
+                if(icon != null){
+                    Image(
+                        bitmap = icon.asImageBitmap(),
+                        contentDescription = name,
+                        modifier = Modifier
+                            .size(80.dp)
+                            .fillMaxWidth()
+                            .clickable {
+                                viewModel.addItem(name, type)
+                                viewModel.showProductList = false
+                            }
+                    )
+                }else{
+                    Image(
+                        painter = painterResource(id = R.drawable.image_area),
+                        contentDescription = name,
+                        modifier = Modifier
+                            .size(80.dp)
+                            .fillMaxWidth()
+                    )
+                }
+
             }
             Row(modifier = Modifier
                 .fillMaxWidth()

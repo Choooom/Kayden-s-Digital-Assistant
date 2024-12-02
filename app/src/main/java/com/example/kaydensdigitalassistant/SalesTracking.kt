@@ -47,6 +47,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -80,6 +81,7 @@ fun SalesTracking(navController: NavController) {
 
     var isReceiptExpanded by remember { mutableStateOf(false) }
     var selectedOrderId by remember { mutableStateOf<Long?>(null) }
+    var selectedCustomerId by remember { mutableStateOf<Long?>(null) }
     var isDropdownExpanded by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf(salesList.firstOrNull()?.dateDelivered ?: "Today") }
 
@@ -143,9 +145,9 @@ fun SalesTracking(navController: NavController) {
                     Text(
                         text = "$selectedDate ⌄",
                         fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
                         modifier = Modifier
                             .clickable { isDropdownExpanded = true }
-                            .padding(8.dp)
                     )
 
                     DropdownMenu(
@@ -186,7 +188,7 @@ fun SalesTracking(navController: NavController) {
 
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.85f)
+                    .fillMaxWidth(0.9f)
                     .fillMaxHeight(0.99f)
                     .padding(top = 20.dp)
                     .clip(RoundedCornerShape(25.dp))
@@ -217,6 +219,8 @@ fun SalesTracking(navController: NavController) {
                             orderBreakdown = salesItem.orderDetails
                         ) {
                             selectedOrderId = salesItem.salesId
+                            selectedCustomerId = salesItem.customerId
+                            println("Selected Order ID: $selectedOrderId")
                             isReceiptExpanded = true
                         }
                     }
@@ -226,7 +230,7 @@ fun SalesTracking(navController: NavController) {
     }
 
     if (isReceiptExpanded) {
-        ReceiptDetails(selectedOrderId) {
+        ReceiptDetails(selectedOrderId, selectedCustomerId) {
             isReceiptExpanded = false
         }
     }
@@ -275,9 +279,10 @@ fun SalesItem(navController: NavController,
                             strokeWidth = 2.dp.toPx()
                         )
                     },
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
             ){
-                Icon(painter = painterResource(id = R.drawable.bookmark), contentDescription = "Bookmark", tint = bookmark)
+                Icon(painter = painterResource(id = R.drawable.bookmark), contentDescription = "Bookmark", tint = bookmark, modifier = Modifier.size(20.dp))
                 Text(text = "#$orderNumber", fontFamily = font_archivo, fontSize = 10.sp)
             }
         }
@@ -333,7 +338,7 @@ fun SalesItem(navController: NavController,
 }
 
 @Composable
-fun ReceiptDetails(orderId: Long?, onClose: () -> Unit){
+fun ReceiptDetails(orderId: Long?, customerId: Long?, onClose: () -> Unit){
     println("OrderId: $orderId")
     val salesViewModel = LocalSalesViewModel.current
     salesViewModel.fetchSalesBySalesId(orderId!!)
@@ -348,9 +353,9 @@ fun ReceiptDetails(orderId: Long?, onClose: () -> Unit){
         }
     }
 
-    LaunchedEffect(orderId) {
-        if (orderId != null) {
-            val fetchedCustomerDetail = customerViewModel.fetchCustomerById(orderId)
+    LaunchedEffect(customerId) {
+        customerId?.let {
+            val fetchedCustomerDetail = customerViewModel.fetchCustomerById(it)
             customerDetailState.value = fetchedCustomerDetail
         }
     }
@@ -538,6 +543,13 @@ fun ReceiptItem(
     quantity: Double,
 ) {
 
+    val productsViewModel = LocalProductsViewModel.current
+    val productIcon = productsViewModel.productIcons[name]
+
+    LaunchedEffect(name) {
+        productsViewModel.fetchProductIconByName(name)
+    }
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.CenterStart
@@ -566,39 +578,28 @@ fun ReceiptItem(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = painterResource(
-                            id =
-                            when (name) {
-                                "Red Horse 1000 ML (Mucho)" -> R.drawable.mucho
-                                "Red Horse 500 ML" -> R.drawable.redhorse_500
-                                "Red Horse 330 ML (Stallion)" -> R.drawable.stallion
-                                "Pale Pilsen 1000 ML (Grande)" -> R.drawable.grande
-                                "Pale Pilsen 320 ML" -> R.drawable.pilsen_small
-                                "San Mig Light 330 ML" -> R.drawable.sanmig_light
-                                "San Mig Apple 330 ML" -> R.drawable.sanmig_apple
-                                "RC Original Small 240 ML" -> R.drawable.rc_small
-                                "RC Orange Small 240 ML" -> R.drawable.orange_small
-                                "RC Lemon Small 240 ML" -> R.drawable.lemon_small
-                                "RC Root Beer Small 240 ML" -> R.drawable.rootbeer_small
-                                "RC Mega Original 800 ML" -> R.drawable.rc_mega
-                                "RC Mega Orange 800 ML" -> R.drawable.orange_mega
-                                "RC Mega Lemon 800 ML" -> R.drawable.lemon_mega
-                                "Cobra Original (Yellow) 240 ML" -> R.drawable.cobra_yellow
-                                "Cobra Citrus (Green) 240 ML" -> R.drawable.cobra_green
-                                else -> R.drawable.plus
-                            }
-                        ),
-                        contentDescription = name,
-                        modifier = Modifier
-                            .size(65.dp)
-                            .clip(RoundedCornerShape(10.dp)),
-                        colorFilter = if (name == "") {
-                            ColorFilter.tint(Color.White)
-                        } else {
-                            null
-                        },
-                    )
+                    if(productIcon != null){
+                        Image(
+                            bitmap = productIcon.asImageBitmap(),
+                            contentDescription = name,
+                            modifier = Modifier
+                                .size(65.dp)
+                                .clip(RoundedCornerShape(10.dp)),
+                            colorFilter = if (name == "") {
+                                ColorFilter.tint(Color.White)
+                            } else {
+                                null
+                            },
+                        )
+                    }else{
+                        Image(
+                            painter = painterResource(id = R.drawable.image_area),
+                            contentDescription = name,
+                            modifier = Modifier
+                                .size(65.dp)
+                                .clip(RoundedCornerShape(10.dp)),
+                        )
+                    }
                 }
                 Column(
                     modifier = Modifier

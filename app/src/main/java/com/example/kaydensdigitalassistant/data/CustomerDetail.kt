@@ -13,4 +13,5 @@ data class CustomerDetail(
     val contactNumber: String,
     @TypeConverters(Converters::class)
     val preferredOrder: List<String> = emptyList()
+    //val registrationDate: String
 )

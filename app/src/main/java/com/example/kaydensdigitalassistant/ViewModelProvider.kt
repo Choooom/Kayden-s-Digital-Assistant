@@ -70,7 +70,8 @@ fun ProvideLocationViewModel(viewModel: LocationViewModel, content: @Composable 
 
 @Composable
 fun ReceiptProvider(content: @Composable () -> Unit) {
-    val viewModel: ReceiptViewModel = viewModel()
+    val productsViewModel = LocalProductsViewModel.current
+    val viewModel: ReceiptViewModel = viewModel { ReceiptViewModel(productsViewModel) }
     ProvideReceiptViewModel(viewModel) {
         content()
     }

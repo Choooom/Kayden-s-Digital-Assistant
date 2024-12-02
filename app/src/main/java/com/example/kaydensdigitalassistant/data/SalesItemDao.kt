@@ -22,4 +22,35 @@ interface SalesItemDao {
 
     @Query("SELECT * FROM sales_items WHERE dateDelivered = :date")
     fun getSalesByDate(date: String): Flow<List<SalesItem>>
+
+    @Query("""
+    SELECT p.productName, SUM(
+        CASE 
+            WHEN si.orderDetails LIKE '%' || p.productName || '%' 
+            THEN (
+                CAST(SUBSTR(
+                    si.orderDetails, 
+                    INSTR(si.orderDetails, '"amount":') + 9,
+                    INSTR(SUBSTR(si.orderDetails, INSTR(si.orderDetails, '"amount":') + 9), ',') - 1
+                ) AS FLOAT) *
+                CAST(SUBSTR(
+                    si.orderDetails,
+                    INSTR(si.orderDetails, '"quantity":') + 11,
+                    INSTR(SUBSTR(si.orderDetails, INSTR(si.orderDetails, '"quantity":') + 11), ',') - 1
+                ) AS FLOAT)
+            )
+            ELSE 0 
+        END
+    ) as totalSales
+    FROM products p
+    LEFT JOIN sales_items si ON si.orderDetails LIKE '%' || p.productName || '%'
+    GROUP BY p.productName
+""")
+    fun getProductSalesCount(): Flow<List<ProductSaleCount>>
+
 }
+
+data class ProductSaleCount(
+    val productName: String,
+    val totalSales: Double
+)

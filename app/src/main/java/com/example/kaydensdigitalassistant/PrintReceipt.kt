@@ -66,6 +66,7 @@ import com.example.kaydensdigitalassistant.kanit_bold
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.Locale
+import kotlin.random.Random
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -204,17 +205,12 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
             withStyle(style = SpanStyle(fontSize = 17.sp)) {
                 val price = viewModel.getTotalAmount()
                 append(
-                    if (pricingOption != "Discounted") {
-                        price.toString()
-                    } else {
-                        val discount = price * (1.875 / 100)
-                        (price - discount).toString()
-                    } + "\n"
+                    price.toString() + "\n"
                 )
             }
             if(pricingOption == "Discounted"){
                 withStyle(style = SpanStyle(fontSize = 10.sp, fontWeight = FontWeight.Normal)) {
-                    append("(Discounted 1.875% off)")
+                    append("(Discounted)")
                 }
             }
         }
@@ -406,12 +402,12 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
             }
         }
 
+        val referenceNumber = generateReferenceNumber()
+
         if(print){
             if (currentCustomer != null) {
                 PrintToThermalPrinter(
-                    businessName = "KAYDEN",
-                    employeeId = "#023578",
-                    dateTime = getCurrentTimeDate(),
+                    referenceNumber = referenceNumber,
                     customerAddress = "${currentCustomer.address}, Palmera Bulacan",
                     paymentOption = paymentOption,
                     receiptItems = viewModel.receiptItemsState,
@@ -423,7 +419,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
         }
 
         if(isConfirmed){
-            ConfirmPurchase(navController, pricingOption)
+            ConfirmPurchase(navController, pricingOption, referenceNumber)
             navController.navigate("selectCustomer")
             isConfirmed = false
         }
@@ -431,7 +427,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
 }
 
 @Composable
-fun ConfirmPurchase(navController: NavController, paymentOption: String) {
+fun ConfirmPurchase(navController: NavController, paymentOption: String, referenceNumber: String) {
     val customerDetailViewModel = LocalCustomerViewModel.current
     val receiptViewModel = LocalReceiptViewModel.current
     val productsViewModel = LocalProductsViewModel.current
@@ -510,10 +506,15 @@ fun getCurrentDate(): String {
     return dateFormat.format(Date())
 }
 
+fun generateReferenceNumber(): String {
+    val random = Random.Default
+    val digits = (1..12).map { random.nextInt(0, 10) }
 
-private fun generateOrderNumber(): Int {
-    // Generate a random order number (can be replaced with your logic)
-    return (1000..9999).random()
+    return digits.chunked(4)
+        .joinToString(" ") { group ->
+            group.joinToString("")
+        }
 }
+
 
 

@@ -9,15 +9,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.kaydensdigitalassistant.data.SalesItemViewModel
 import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
+import com.patrykandpatrick.vico.compose.axis.horizontal.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.startAxis
 import com.patrykandpatrick.vico.compose.chart.Chart
 import com.patrykandpatrick.vico.compose.chart.line.lineChart
@@ -29,6 +35,7 @@ import com.patrykandpatrick.vico.compose.legend.horizontalLegend
 import com.patrykandpatrick.vico.compose.legend.verticalLegend
 import com.patrykandpatrick.vico.compose.legend.legendItem
 import com.patrykandpatrick.vico.compose.component.textComponent
+import com.patrykandpatrick.vico.compose.dimensions.dimensionsOf
 import com.patrykandpatrick.vico.core.component.shape.Shapes
 import com.patrykandpatrick.vico.core.chart.line.LineChart
 import com.patrykandpatrick.vico.core.component.text.VerticalPosition
@@ -202,6 +209,59 @@ fun NumberOfSalesChart(viewModel: SalesItemViewModel) {
     }
 }
 
+@Composable
+fun ProductSalesChart(viewModel: SalesItemViewModel) {
+    val data by viewModel.getProductSalesCount().collectAsState(initial = emptyList())
 
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            "Product Sales Distribution",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
 
+        Chart(
+            chart = columnChart(
+                columns = listOf(
+                    lineComponent(
+                        color = MaterialTheme.colorScheme.primary,
+                        thickness = 25.dp
+                    )
+                ),
+                spacing = 24.dp
+            ),
+            model = entryModelOf(*data.mapIndexed { index, (_, sales) ->
+                index.toFloat() to sales.toFloat()
+            }.toTypedArray()),
+            startAxis = startAxis(
+                valueFormatter = { value, _ -> "₱${value.toInt()}" }
+            ),
+            bottomAxis = rememberBottomAxis(
+                valueFormatter = { value, _ ->
+                    if (value.toInt() in data.indices) {
+                        data[value.toInt()].productName
+                    } else ""
+                },
+                labelRotationDegrees = 90f,
+                guideline = null,
+                label = textComponent(
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textSize = 12.sp,
+                    padding = dimensionsOf(horizontal = 8.dp, vertical = 20.dp),
+                    lineCount = 2,
+                    ellipsize = TextUtils.TruncateAt.END
+                )
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(500.dp)
+                .padding(bottom = 80.dp)
+        )
+    }
+}
 

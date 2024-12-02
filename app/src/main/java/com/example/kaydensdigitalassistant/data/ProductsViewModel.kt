@@ -9,11 +9,33 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 
 class ProductsViewModel(private val repository: ProductsRepository) : ViewModel() {
     val allProducts: LiveData<List<Products>> = repository.allProducts.asLiveData()
+
+    private val _productsState = MutableStateFlow<List<Products>>(emptyList())
+    val productsState = _productsState.asStateFlow()
+
+    private val _productTypes = MutableStateFlow<List<String>>(emptyList())
+    val productTypes = _productTypes.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            repository.allProducts.collect { products ->
+                _productsState.value = products
+            }
+        }
+
+        viewModelScope.launch {
+            repository.getAllProductTypes().collect { types ->
+                _productTypes.value = types
+            }
+        }
+    }
 
     private val _productIcons = mutableStateMapOf<String, Bitmap?>()
     val productIcons: Map<String, Bitmap?> = _productIcons
@@ -84,5 +106,9 @@ class ProductsRepository(private val productsDao: ProductsDao) {
 
     suspend fun deleteProduct(product: Products) {
         productsDao.deleteProduct(product)
+    }
+
+    fun getAllProductTypes(): Flow<List<String>> {
+        return productsDao.getAllProductTypes()
     }
 }
