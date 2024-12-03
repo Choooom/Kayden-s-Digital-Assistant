@@ -79,39 +79,39 @@ fun SelectCustomer(navController: NavController){
         val appViewModel = LocalAppViewModel.current
         appViewModel.clearAllData()
    */
-/*
-    val productViewModel = LocalProductsViewModel.current
-    val context = LocalContext.current
+    /*
+        val productViewModel = LocalProductsViewModel.current
+        val context = LocalContext.current
 
-    fun getBitmap(drawableId: Int): Bitmap {
-        return BitmapFactory.decodeResource(context.resources, drawableId)
-    }
-
-    val productsList = listOf(
-        Products(productName = "Red Horse 1000 ML (Mucho)", type = "Beer", normalPrice = 630.0, discountedPrice = 628.0, stock = 100.0, productIcon = getBitmap(R.drawable.mucho)),
-        Products(productName = "Red Horse 500 ML", type = "Beer", normalPrice = 620.0, discountedPrice = 615.0, stock = 100.0, productIcon = getBitmap(R.drawable.redhorse_500)),
-        Products(productName = "Red Horse 330 ML (Stallion)", type = "Beer", normalPrice = 860.0, discountedPrice = 853.0, stock = 100.0, productIcon = getBitmap(R.drawable.stallion)),
-        Products(productName = "Pale Pilsen 1000 ML (Grande)", type = "Beer", normalPrice = 550.0, discountedPrice = 544.0, stock = 100.0, productIcon = getBitmap(R.drawable.grande)),
-        Products(productName = "Pale Pilsen 320 ML", type = "Beer", normalPrice = 820.0, discountedPrice = 800.0, stock = 100.0, productIcon = getBitmap(R.drawable.pilsen_small)),
-        Products(productName = "San Mig Light 330 ML", type = "Beer", normalPrice = 1040.0, discountedPrice = 1020.0, stock = 100.0, productIcon = getBitmap(R.drawable.sanmig_light)),
-        Products(productName = "San Mig Apple 330 ML", type = "Beer", normalPrice = 800.0, discountedPrice = 778.0, stock = 100.0, productIcon = getBitmap(R.drawable.sanmig_apple)),
-        Products(productName = "RC Original Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.rc_small)),
-        Products(productName = "RC Orange Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.orange_small)),
-        Products(productName = "RC Lemon Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.lemon_small)),
-        Products(productName = "RC Root Beer Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.rootbeer_small)),
-        Products(productName = "RC Mega Original 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.rc_mega)),
-        Products(productName = "RC Mega Orange 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.orange_mega)),
-        Products(productName = "RC Mega Lemon 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.lemon_mega)),
-        Products(productName = "Cobra Original (Yellow) 240 ML", type = "Energy-Drink", normalPrice = 300.0, discountedPrice = 295.0, stock = 100.0, productIcon = getBitmap(R.drawable.cobra_yellow)),
-        Products(productName = "Cobra Citrus (Green) 240 ML", type = "Energy-Drink", normalPrice = 300.0, discountedPrice = 295.0, stock = 100.0, productIcon = getBitmap(R.drawable.cobra_green))
-    )
-
-    LaunchedEffect(key1 = Unit) {
-        productsList.forEach { product ->
-            productViewModel.insertProduct(product)
+        fun getBitmap(drawableId: Int): Bitmap {
+            return BitmapFactory.decodeResource(context.resources, drawableId)
         }
-    }
-*/
+
+        val productsList = listOf(
+            Products(productName = "Red Horse 1000 ML (Mucho)", type = "Beer", normalPrice = 630.0, discountedPrice = 628.0, stock = 100.0, productIcon = getBitmap(R.drawable.mucho)),
+            Products(productName = "Red Horse 500 ML", type = "Beer", normalPrice = 620.0, discountedPrice = 615.0, stock = 100.0, productIcon = getBitmap(R.drawable.redhorse_500)),
+            Products(productName = "Red Horse 330 ML (Stallion)", type = "Beer", normalPrice = 860.0, discountedPrice = 853.0, stock = 100.0, productIcon = getBitmap(R.drawable.stallion)),
+            Products(productName = "Pale Pilsen 1000 ML (Grande)", type = "Beer", normalPrice = 550.0, discountedPrice = 544.0, stock = 100.0, productIcon = getBitmap(R.drawable.grande)),
+            Products(productName = "Pale Pilsen 320 ML", type = "Beer", normalPrice = 820.0, discountedPrice = 800.0, stock = 100.0, productIcon = getBitmap(R.drawable.pilsen_small)),
+            Products(productName = "San Mig Light 330 ML", type = "Beer", normalPrice = 1040.0, discountedPrice = 1020.0, stock = 100.0, productIcon = getBitmap(R.drawable.sanmig_light)),
+            Products(productName = "San Mig Apple 330 ML", type = "Beer", normalPrice = 800.0, discountedPrice = 778.0, stock = 100.0, productIcon = getBitmap(R.drawable.sanmig_apple)),
+            Products(productName = "RC Original Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.rc_small)),
+            Products(productName = "RC Orange Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.orange_small)),
+            Products(productName = "RC Lemon Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.lemon_small)),
+            Products(productName = "RC Root Beer Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.rootbeer_small)),
+            Products(productName = "RC Mega Original 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.rc_mega)),
+            Products(productName = "RC Mega Orange 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.orange_mega)),
+            Products(productName = "RC Mega Lemon 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.lemon_mega)),
+            Products(productName = "Cobra Original (Yellow) 240 ML", type = "Energy-Drink", normalPrice = 300.0, discountedPrice = 295.0, stock = 100.0, productIcon = getBitmap(R.drawable.cobra_yellow)),
+            Products(productName = "Cobra Citrus (Green) 240 ML", type = "Energy-Drink", normalPrice = 300.0, discountedPrice = 295.0, stock = 100.0, productIcon = getBitmap(R.drawable.cobra_green))
+        )
+
+        LaunchedEffect(key1 = Unit) {
+            productsList.forEach { product ->
+                productViewModel.insertProduct(product)
+            }
+        }
+    */
 
     Box(
         modifier = Modifier
@@ -302,10 +302,7 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
     var fullName by remember { mutableStateOf("") }
     var contactNumber by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
-
-    LaunchedEffect(Unit) {
-        customerViewModel.resetCurrentCustomer()
-    }
+    var isCustomerInserted by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -353,6 +350,7 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
+                // Name Field
                 Row(modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 45.dp), horizontalArrangement = Arrangement.Start) {
@@ -379,9 +377,13 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
                         focusedIndicatorColor = BlueEnd,
-                        unfocusedIndicatorColor = BlueEnd
+                        unfocusedIndicatorColor = BlueEnd,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
                     )
                 )
+
+                // Contact Number Field
                 Row(modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 45.dp), horizontalArrangement = Arrangement.Start) {
@@ -408,9 +410,13 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
                         focusedIndicatorColor = BlueEnd,
-                        unfocusedIndicatorColor = BlueEnd
+                        unfocusedIndicatorColor = BlueEnd,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
                     )
                 )
+
+                // Address Field
                 Row(modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 45.dp), horizontalArrangement = Arrangement.Start) {
@@ -437,41 +443,34 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
                         focusedIndicatorColor = BlueEnd,
-                        unfocusedIndicatorColor = BlueEnd
+                        unfocusedIndicatorColor = BlueEnd,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
                     )
                 )
             }
 
             Button(
                 onClick = {
-                    // Explicitly reset current customer
-                    customerViewModel.resetCurrentCustomer()
-
                     when {
-                        fullName.isBlank() -> {
-                            // Show error for empty name
-                        }
-                        contactNumber.isBlank() -> {
-                            // Show error for empty contact
-                        }
-                        address.isBlank() -> {
-                            // Show error for empty address
+                        fullName.isBlank() || contactNumber.isBlank() || address.isBlank() -> {
+                            // Handle validation
                         }
                         else -> {
-                            // Create a new customer with no initial ID
                             val newCustomer = CustomerDetail(
-                                customerId = 0,
+                                customerId = 0,  // This will be replaced with the generated ID
                                 name = fullName.trim(),
                                 address = address.trim(),
                                 contactNumber = contactNumber.trim()
                             )
 
-                            // Ensure complete reset before inserting
-                            customerViewModel.resetNewCurrentCustomer()
-                            customerViewModel.insertCustomer(newCustomer)
-                            customerViewModel.isNewCustomer.value = true
-
-                            customerPicked()
+                            customerViewModel.insertCustomer(newCustomer) { insertedCustomer ->
+                                // Now insertedCustomer has the correct customerId from the database
+                                customerViewModel.setCurrentCustomer(insertedCustomer)
+                                isCustomerInserted = true
+                                customerViewModel.isNewCustomer.value = true
+                                customerPicked()
+                            }
                         }
                     }
                 },
@@ -493,14 +492,15 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
     }
 }
 
+
 @Composable
 fun CustomerItem(
     name: String,
     contact: String,
     address: String,
-    customerId: Long,  // Add customerId parameter
+    customerId: Long,
     isSelected: () -> Unit,
-    navController: NavController  // Add NavController
+    navController: NavController
 ) {
     val customerDetail = LocalCustomerViewModel.current
 
@@ -510,9 +510,16 @@ fun CustomerItem(
             .padding(start = 15.dp, top = 10.dp)
             .clickable {
                 isSelected()
-                customerDetail.setCurrentCustomer(CustomerDetail(name = name, address = address, contactNumber = contact))
+                customerDetail.setCurrentCustomer(
+                    CustomerDetail(
+                        customerId = customerId,
+                        name = name,
+                        address = address,
+                        contactNumber = contact
+                    )
+                )
             },
-        horizontalArrangement = Arrangement.SpaceBetween,  // Changed to SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
@@ -546,7 +553,6 @@ fun CustomerItem(
             }
         }
 
-        // Location Icon
         IconButton(
             onClick = { navController.navigate("maps/$customerId") }
         ) {
@@ -558,4 +564,3 @@ fun CustomerItem(
         }
     }
 }
-

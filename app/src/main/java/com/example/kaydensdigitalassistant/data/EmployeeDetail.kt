@@ -14,5 +14,5 @@ data class EmployeeDetail(
     val birthdate: String,
     val password: String,
     val username: String,
-    //val userProfile: Bitmap? = null
+    val userProfile: Bitmap? = null
 )

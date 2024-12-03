@@ -26,4 +26,10 @@ interface EmployeeDetailDao {
     @Delete
     suspend fun deleteEmployee(employee: EmployeeDetail)
 
+    @Query("DELETE FROM employee_details")
+    suspend fun clearAllEmployees()
+
+    @Query("UPDATE employee_details SET password = :newPassword WHERE emailAddress = :email")
+    suspend fun updatePassword(email: String, newPassword: String)
+
 }

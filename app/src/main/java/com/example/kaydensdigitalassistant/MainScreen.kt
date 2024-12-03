@@ -42,7 +42,7 @@ fun MainScreen() {
     val isAdmin by userRoleViewModel.isAdmin.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        NavHost(navController = navController, startDestination = "salesTracking", modifier = Modifier.weight(1f)) {
+        NavHost(navController = navController, startDestination = "login", modifier = Modifier.weight(1f)) {
 
             composable("login") {
                 LogIn(
@@ -82,7 +82,7 @@ fun MainScreen() {
             }
 
             composable("confirmReceipt"){
-                ConfirmPurchase(navController = navController, "","")
+                ConfirmPurchase(navController = navController, "","", "")
             }
 
             composable(
@@ -137,6 +137,7 @@ fun MainScreen() {
             composable("resetPassword") {
                 PasswordResetScreen(navController = navController)
             }
+
 /*
             composable(
                 route = "customerLocation/{customerId}",
@@ -172,7 +173,7 @@ fun MainScreen() {
             }
         }
 
-    if (currentRoute != "login" && currentRoute != "admin_login"){
+    if (currentRoute != "login" && currentRoute != "admin_login" && currentRoute != "resetPassword"){
         BottomNavBar(navController = navController, isAdmin)
     }
     }

@@ -63,7 +63,9 @@ import com.example.kaydensdigitalassistant.data.AppDatabase
 import com.example.kaydensdigitalassistant.data.ReceiptItem
 import com.example.kaydensdigitalassistant.font_abeezee
 import com.example.kaydensdigitalassistant.kanit_bold
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Date
 import java.util.Locale
 import kotlin.random.Random
@@ -80,6 +82,8 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
     println("Confirmed Receipt: ${viewModel.receiptItemsState}")
     var isConfirmed by remember{ mutableStateOf(false)}
     var print by remember{ mutableStateOf(false) }
+
+    val referenceNumber = remember { generateReferenceNumber() }
 
     Column(
         modifier = Modifier
@@ -112,7 +116,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
                 .fillMaxWidth()
                 .fillMaxHeight(0.2f)
                 .padding(bottom = 25.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
+            horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.Bottom
         ){
             Icon(
@@ -125,15 +129,6 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
                         print = true
                     },
             )
-
-            Icon(
-                painter = painterResource(id = R.drawable.tray_arrow_down),
-                contentDescription = "Download",
-                tint = Color.White,
-                modifier = Modifier
-                    .size(40.dp)
-                    .clickable { },
-            )
         }
 
         val businessDetails = buildAnnotatedString {
@@ -141,7 +136,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
                 append("KAYDEN\n")
             }
             withStyle(style = SpanStyle(fontSize = 15.sp, fontWeight = FontWeight.Light)) {
-                append("Employee #023578\n")
+                append("Reference No.: $referenceNumber\n")
             }
             withStyle(style = SpanStyle(fontSize = 15.sp, fontWeight = FontWeight.Light)) {
                 append(CurrentDateTime() + "\n")
@@ -402,8 +397,6 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
             }
         }
 
-        val referenceNumber = generateReferenceNumber()
-
         if(print){
             if (currentCustomer != null) {
                 PrintToThermalPrinter(
@@ -412,14 +405,14 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
                     paymentOption = paymentOption,
                     receiptItems = viewModel.receiptItemsState,
                     totalAmount = viewModel.getTotalAmount(),
-                    pricingOption = paymentOption
+                    pricingOption = pricingOption,
                 )
             }
             print = false
         }
 
         if(isConfirmed){
-            ConfirmPurchase(navController, pricingOption, referenceNumber)
+            ConfirmPurchase(navController, paymentOption, pricingOption, referenceNumber)
             navController.navigate("selectCustomer")
             isConfirmed = false
         }
@@ -427,7 +420,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
 }
 
 @Composable
-fun ConfirmPurchase(navController: NavController, paymentOption: String, referenceNumber: String) {
+fun ConfirmPurchase(navController: NavController, paymentOption: String, pricingOption: String, referenceNumber: String) {
     val customerDetailViewModel = LocalCustomerViewModel.current
     val receiptViewModel = LocalReceiptViewModel.current
     val productsViewModel = LocalProductsViewModel.current
@@ -437,53 +430,56 @@ fun ConfirmPurchase(navController: NavController, paymentOption: String, referen
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Add a check to ensure we have a current customer before proceeding
     LaunchedEffect(currentCustomer) {
         println("DEBUG: Confirm Purchase - Current Customer: $currentCustomer")
-        scope.launch {
+        withContext(Dispatchers.Main) {
             try {
                 val appDatabase = AppDatabase.getInstance(context)
 
-                appDatabase.withTransaction {
-                    println("Attempting to process sale for Customer: $currentCustomer")
-
-                    val salesItem = SalesItem(
-                        customerId = currentCustomer.value.customerId,
-                        employeeId = 123456789L,
-                        orderDetails = receiptItemsState,
-                        totalAmount = calculateTotalAmount(receiptItemsState),
-                        dateDelivered = getCurrentDate(),
-                        timeDelivered = getCurrentTime(),
-                        paymentMethod = paymentOption
-                    )
-
-                    appDatabase.salesItemDao().insertSalesItem(salesItem)
-
-                    receiptItemsState.forEach { item ->
-                        productsViewModel.updateStockAfterSale(
-                            productName = item.name,
-                            quantity = item.quantity
+                withContext(Dispatchers.IO) {
+                    appDatabase.withTransaction {
+                        // Directly set new preferred orders without combining with existing ones
+                        val updatedCustomer = currentCustomer.value.copy(
+                            preferredOrder = receiptItemsState.map { it.name }
                         )
+
+                        appDatabase.customerDetailDao().updateCustomer(updatedCustomer)
+
+                        val salesItem = SalesItem(
+                            customerId = currentCustomer.value.customerId,
+                            employeeId = 123456789L,
+                            orderDetails = receiptItemsState,
+                            totalAmount = calculateTotalAmount(receiptItemsState),
+                            dateDelivered = getCurrentDate(),
+                            timeDelivered = getCurrentTime(),
+                            paymentMethod = paymentOption,
+                            paymentOption = pricingOption,
+                            referenceNumber = referenceNumber
+                        )
+
+                        appDatabase.salesItemDao().insertSalesItem(salesItem)
+
+                        receiptItemsState.forEach { item ->
+                            productsViewModel.updateStockAfterSale(
+                                productName = item.name,
+                                quantity = item.quantity
+                            )
+                        }
                     }
                 }
 
                 receiptViewModel.receiptItemsState.clear()
-
-                // Forcefully reset customer
                 customerDetailViewModel.resetCurrentCustomer()
                 customerDetailViewModel.resetNewCurrentCustomer()
 
                 println("Sale processed, customer reset")
-
                 navController.navigate("selectCustomer")
             } catch (e: Exception) {
                 println("Error processing sale: ${e.message}")
-                // Handle error, potentially show a user-friendly message
             }
         }
     }
 }
-
 
 private fun calculateTotalAmount(receiptItemsState: List<ReceiptItem>): Double {
     // Calculate the total amount from the receiptItems

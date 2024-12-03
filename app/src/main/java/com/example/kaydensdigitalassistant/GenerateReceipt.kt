@@ -81,6 +81,29 @@ fun GenerateReceipt(navController: NavController) {
     }
 
     val receiptViewModel = LocalReceiptViewModel.current
+    val receiptViewModels = LocalProductsViewModel.current
+    val customerViewModel = LocalCustomerViewModel.current
+    val currentCustomer = customerViewModel.currentCustomer.value
+
+    LaunchedEffect(Unit) {
+        if (currentCustomer.preferredOrder.isNotEmpty() && receiptViewModel.receiptItemsState.isEmpty()) {
+            // Get product details for each preferred item
+            currentCustomer.preferredOrder.forEach { productName ->
+                // Assuming you have a method to get product details by name
+                val product = receiptViewModels.getProductByName(productName)
+                product?.let {
+                    receiptViewModel.addProductItem(
+                        ReceiptItem(
+                            name = it.productName,
+                            type = it.type,
+                            amount = if (receiptViewModel.isDiscounted) it.discountedPrice else it.normalPrice,
+                            quantity = 1.0
+                        )
+                    )
+                }
+            }
+        }
+    }
 
 
     val totalAmount by rememberUpdatedState(newValue = receiptViewModel.receiptItemsState.sumOf { it.amount * it.quantity })

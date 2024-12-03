@@ -18,6 +18,6 @@ data class SalesItem(
     val dateDelivered: String,
     val timeDelivered: String,
     val paymentMethod: String,
-    //val paymentOption: String
-    // val referenceNumber: String
+    val paymentOption: String,
+    val referenceNumber: String
 )

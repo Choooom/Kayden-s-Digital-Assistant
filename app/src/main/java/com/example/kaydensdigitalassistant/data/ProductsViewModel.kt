@@ -69,6 +69,10 @@ class ProductsViewModel(private val repository: ProductsRepository) : ViewModel(
         repository.deleteProduct(product)
     }
 
+    suspend fun getProductByName(name: String): Products? {
+        return repository.getProductByName(name)
+    }
+
     class ProductsViewModelFactory(private val repository: ProductsRepository) :
         ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -111,4 +115,9 @@ class ProductsRepository(private val productsDao: ProductsDao) {
     fun getAllProductTypes(): Flow<List<String>> {
         return productsDao.getAllProductTypes()
     }
+
+    suspend fun getProductByName(name: String): Products? {
+        return productsDao.getProductByName(name)
+    }
+
 }

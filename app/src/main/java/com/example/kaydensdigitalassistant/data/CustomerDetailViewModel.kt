@@ -26,7 +26,7 @@ class CustomerDetailViewModel(private val repository: CustomerRepository) : View
 
     var isNewCustomer = mutableStateOf(false)
 
-    private val _currentCustomer = mutableStateOf<CustomerDetail>(CustomerDetail(name = "", address = "", contactNumber = "", customerId = 0))
+    private val _currentCustomer = mutableStateOf<CustomerDetail>(CustomerDetail(name = "", address = "", contactNumber = "", customerId = 0, ))
     val currentCustomer: State<CustomerDetail> = _currentCustomer
 
     private val _newCurrentCustomer = mutableStateOf<CustomerDetail>(CustomerDetail(name = "", address = "", contactNumber = "", customerId = 0))
@@ -38,6 +38,7 @@ class CustomerDetailViewModel(private val repository: CustomerRepository) : View
     // Set current customer to selected customer
     fun setCurrentCustomer(customer: CustomerDetail) {
         _currentCustomer.value = customer
+        _newCurrentCustomer.value = customer
     }
 
     // Reset current customer when switching between screens or actions
@@ -90,18 +91,23 @@ class CustomerDetailViewModel(private val repository: CustomerRepository) : View
     }
 
     // Insert a new customer and set it as the current customer
-    fun insertCustomer(customer: CustomerDetail) = viewModelScope.launch {
-        // Reset current customer before inserting
-        _newCurrentCustomer.value = CustomerDetail(name = "", address = "", contactNumber = "", customerId = 0)
-
+    fun insertCustomer(customer: CustomerDetail, onComplete: (CustomerDetail) -> Unit) = viewModelScope.launch {
+        // Insert and get the generated ID
         val generatedId = dao.insertCustomer(customer)
-        val customerWithId = customer.copy(customerId = generatedId)
 
-        // Set the new customer
-        _newCurrentCustomer.value = customerWithId
+        // Immediately fetch the complete customer record from the database
+        val verifiedCustomer = dao.getCustomerById(generatedId) ?: return@launch
 
-        println("DEBUG: Inserted Customer ID: $generatedId")
-        println("DEBUG: Current Customer After Insert: ${_newCurrentCustomer.value}")
+        // Update both states with the verified customer data
+        _currentCustomer.value = verifiedCustomer
+        _newCurrentCustomer.value = verifiedCustomer
+
+        // Call the completion handler with the verified customer
+        onComplete(verifiedCustomer)
+
+        // Log verification (optional)
+        println("Inserted Customer ID: ${verifiedCustomer.customerId}")
+        println("Current Customer State: ${_currentCustomer.value}")
     }
 
     // Search for customers based on query and update the current customer
@@ -111,6 +117,7 @@ class CustomerDetailViewModel(private val repository: CustomerRepository) : View
             if (customerList.isNotEmpty()) {
                 val matchedCustomer = customerList.first()
                 val customerWithId = matchedCustomer.copy(customerId = matchedCustomer.customerId)
+                print("Customer with ID: ${customerWithId.customerId} & Customer Id: ${matchedCustomer.customerId}")
                 _currentCustomer.value = customerWithId // Update current customer with the matched customer
             }
         }

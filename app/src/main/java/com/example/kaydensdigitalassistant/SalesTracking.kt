@@ -282,7 +282,7 @@ fun SalesItem(navController: NavController,
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ){
-                Icon(painter = painterResource(id = R.drawable.bookmark), contentDescription = "Bookmark", tint = bookmark, modifier = Modifier.size(20.dp))
+                Icon(painter = painterResource(id = R.drawable.bookmark), contentDescription = "Bookmark", tint = bookmark, modifier = Modifier.size(15.dp))
                 Text(text = "#$orderNumber", fontFamily = font_archivo, fontSize = 10.sp)
             }
         }
@@ -436,6 +436,7 @@ fun ReceiptDetails(orderId: Long?, customerId: Long?, onClose: () -> Unit){
                 Text(text = "STATUS", fontFamily = font_notosans_bold, fontSize = 30.sp,
                     modifier = Modifier
                         .padding(start = 20.dp).align(Alignment.Top))
+
                 Spacer(modifier = Modifier.width(20.dp))
                 Text("  Delivered  ", fontFamily = font_notosans_bold,
                     modifier = Modifier.padding(top = 13.dp).background(ButtonGreen))
@@ -485,17 +486,50 @@ fun ReceiptDetails(orderId: Long?, customerId: Long?, onClose: () -> Unit){
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = 20.dp, top = 10.dp)
+                        .height(55.dp) ,
+                    verticalAlignment = Alignment.CenterVertically  // Center all items vertically
                 ){
-                    Icon(imageVector = Icons.Default.AccountCircle, contentDescription = "Profile",
-                        modifier = Modifier.size(55.dp))
+                    Icon(
+                        imageVector = Icons.Default.AccountCircle,
+                        contentDescription = "Profile",
+                        modifier = Modifier.size(55.dp)
+                    )
                     Column(
-                        modifier = Modifier.padding(start = 10.dp)
-                            .fillMaxWidth(),
+                        modifier = Modifier
+                            .padding(start = 10.dp)
+                            .fillMaxHeight(),  // Fill Row height
                         horizontalAlignment = Alignment.Start,
                         verticalArrangement = Arrangement.Center
                     ){
-                        Text(text = customerDetailState.value?.name ?: "", fontFamily = font_notosans_bold, fontSize = 15.sp)
-                        Text(text = customerDetailState.value?.contactNumber ?: "", fontFamily = font_notosans_bold, fontSize = 12.sp)
+                        Text(text = customerDetailState.value?.name ?: "",
+                            fontFamily = font_notosans_bold,
+                            fontSize = 15.sp)
+                        Text(text = customerDetailState.value?.contactNumber ?: "",
+                            fontFamily = font_notosans_bold,
+                            fontSize = 12.sp)
+                    }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxHeight()  // Fill Row height
+                            .fillMaxWidth()
+                            .padding(start = 20.dp),
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        val paymentOption = selectedSalesItem?.paymentOption
+                        val paymentMethod = selectedSalesItem?.paymentMethod
+                        Text(
+                            text = "Payment Option: ${paymentOption?: "Regular"}",
+                            fontFamily = font_notosans_bold,
+                            fontSize = 10.sp,
+                            modifier = Modifier.padding(start = 15.dp)
+                        )
+                        Text(
+                            text = "Payment Method: ${paymentMethod?: "Cash"}",
+                            fontFamily = font_notosans_bold,
+                            fontSize = 10.sp,
+                            modifier = Modifier.padding(start = 15.dp)
+                        )
                     }
                 }
                 Column(
@@ -505,7 +539,6 @@ fun ReceiptDetails(orderId: Long?, customerId: Long?, onClose: () -> Unit){
                     verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.End
                 ){
-
                     OrderDetails(salesViewModel.selectedSalesItem.value?.orderDetails ?: emptyList())
 
                     val getTotal = selectedSalesItem?.totalAmount ?: 0.0

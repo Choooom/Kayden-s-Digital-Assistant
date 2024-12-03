@@ -46,6 +46,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -64,42 +65,17 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 @Composable
-fun LogIn(modifier: Modifier, backgroundColor: Color, navController: NavController){
-    var username: String by remember{
-        mutableStateOf("")
-    }
-    var password:String by remember{
-        mutableStateOf("")
-    }
-
-    val productViewModel = LocalProductsViewModel.current
-
-
-    val annotatedText = buildAnnotatedString {
-        append("")
-
-        pushStringAnnotation(
-            tag = "URL",
-            annotation = "https://www.example.com"
-        )
-        withStyle(style = SpanStyle(
-            color = Color.Black,
-            textDecoration = TextDecoration.Underline,
-            fontFamily = font_archivo,
-            fontSize = 15.sp,)) {
-            append("FORGOT PASSWORD")
-        }
-        pop()
-    }
-
-    var errorMessage by remember { mutableStateOf(false) }
-
-    var adminAttempt by remember { mutableStateOf(0)}
-    var adminAttemptMessage by remember{mutableStateOf(false)}
+fun LogIn(modifier: Modifier, backgroundColor: Color, navController: NavController) {
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var adminAttempt by remember { mutableStateOf(0) }
+    var adminAttemptMessage by remember { mutableStateOf(false) }
 
     val userRoleViewmodel = LocalUserRoleViewModel.current
-    val isAdmin by userRoleViewmodel.isAdmin.collectAsState()
-
+    val employeeViewModel = LocalEmployeeViewModel.current
+    val scope = rememberCoroutineScope()
     val insets = WindowInsets.systemBars.asPaddingValues()
 
     Column(
@@ -109,23 +85,19 @@ fun LogIn(modifier: Modifier, backgroundColor: Color, navController: NavControll
             .background(backgroundColor),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(modifier = Modifier.fillMaxSize())
-        {
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Top Blue Section with Logo
             Column(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
                     .fillMaxHeight(0.3f)
                     .clip(RoundedCornerShape(bottomStart = 50.dp, bottomEnd = 50.dp))
-                    .background(
-                        Brush.linearGradient(colors = listOf(BlueStart, BlueEnd))
-                    )
+                    .background(Brush.linearGradient(colors = listOf(BlueStart, BlueEnd)))
                     .padding(bottom = 50.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
                 Spacer(modifier = Modifier.height(40.dp))
-
                 Image(
                     painter = painterResource(id = R.drawable.company_logo),
                     contentDescription = "Kayden Trdg. Logo",
@@ -140,6 +112,7 @@ fun LogIn(modifier: Modifier, backgroundColor: Color, navController: NavControll
                 )
             }
 
+            // Login Form Section
             Column(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
@@ -158,77 +131,74 @@ fun LogIn(modifier: Modifier, backgroundColor: Color, navController: NavControll
                         .align(Alignment.CenterHorizontally),
                     tint = Color.Black
                 )
+
                 Text(
                     text = "EMPLOYEE LOGIN",
                     fontFamily = font_archivo,
                     fontWeight = FontWeight.W100,
                     fontSize = 25.sp,
                     color = Color.Black,
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally),
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
 
                 CustomTextField(
                     value = username,
-                    onValueChange = { username = it },
-                    placeholder = "USERNAME" ,
+                    onValueChange = { username = it.trim() },
+                    placeholder = "USERNAME",
                 )
+
 
                 CustomTextField(
                     value = password,
-                    onValueChange = { password = it },
-                    placeholder = "PASSWORD" ,
+                    onValueChange = { password = it.trim() },
+                    placeholder = "PASSWORD",
                     initialIcon = painterResource(id = R.drawable.eye_off_outline),
-                    toggleIcon = painterResource(id = R.drawable.eye_outline),
+                    toggleIcon = painterResource(id = R.drawable.eye_outline)
                 )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp),
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                }
 
                 WindowLink(navController, "FORGOT PASSWORD", "resetPassword", 15)
 
-                val employeeViewModel = LocalEmployeeViewModel.current
-                var isLoading by remember { mutableStateOf(false) }
-                val scope = rememberCoroutineScope()
-
-                Row(modifier = Modifier
-                    .fillMaxWidth(),
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
-                ){
+                ) {
                     Button(
                         onClick = {
-                            if (username.isNotBlank() && password.isNotBlank()) {
-                                isLoading = true
-                                scope.launch {
-                                    employeeViewModel.loginEmployee(username, password)
-                                    employeeViewModel.currentEmployee.collect { employee ->
-                                        if (employee != null) {
+                            scope.launch {
+                                when {
+                                    username.isBlank() -> {
+                                        errorMessage = "Username is required"
+                                    }
+                                    password.isBlank() -> {
+                                        errorMessage = "Password is required"
+                                    }
+                                    else -> {
+                                        isLoading = true
+                                        try {
+                                            val loginSuccess = employeeViewModel.loginEmployee(username, password)
+                                            if (loginSuccess) {
+                                                userRoleViewmodel.setAdminStatus(false)
+                                                navController.navigate("selectCustomer") {
+                                                    popUpTo("login") { inclusive = true }
+                                                }
+                                            } else {
+                                                errorMessage = "Invalid credentials"
+                                            }
+                                        } catch (e: Exception) {
+                                            errorMessage = "Login failed: ${e.message}"
+                                        } finally {
                                             isLoading = false
-                                            userRoleViewmodel.setAdminStatus(false)
-                                            errorMessage = false
-                                            navController.navigate("selectCustomer")
-                                            scope.cancel()
-                                        } else {
-                                            isLoading = false
-                                            errorMessage = true
                                         }
                                     }
                                 }
-                            } else {
-                                errorMessage = true
                             }
                         },
                         modifier = Modifier
                             .padding(20.dp)
                             .height(55.dp)
                             .fillMaxWidth(0.4f),
-                        colors = ButtonDefaults.buttonColors(containerColor = BlueEnd)
+                        colors = ButtonDefaults.buttonColors(containerColor = BlueEnd),
+                        enabled = !isLoading
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(color = Color.White)
@@ -236,32 +206,34 @@ fun LogIn(modifier: Modifier, backgroundColor: Color, navController: NavControll
                             Text("LOGIN", color = Color.White, fontFamily = font_archivo)
                         }
                     }
-
                 }
             }
         }
     }
 
+    // Error Message Popup
+    errorMessage?.let { message ->
+        PopOffMessage(
+            message = message,
+            onDismiss = { errorMessage = null },
+            messageIcon = Icons.Filled.Info,
+            backgroundColor = errorMessageBackground,
+            backgroundBorder = errorMessageBorder
+        )
+    }
 
-        if(errorMessage){
+    // Admin Attempt Message
+    if (adminAttemptMessage) {
+        if (adminAttempt <= 5) {
             PopOffMessage(
-                message = "Invalid username and/or password",
-                onDismiss = { errorMessage = false },
-                messageIcon = Icons.Filled.Info,
-                backgroundColor = errorMessageBackground,
-                backgroundBorder = errorMessageBorder
+                navController = navController,
+                message = "You are ${6 - adminAttempt} clicks away from being an Admin!",
+                onDismiss = { adminAttemptMessage = false }
             )
-        }
-
-    if(adminAttemptMessage){
-        if(adminAttempt <= 5){
-            PopOffMessage(navController, "You are ${6 - adminAttempt} clicks away from being an Admin!", onDismiss = {adminAttemptMessage = false})
-        }
-        else{
+        } else {
             adminAttemptMessage = false
             adminAttempt = 0
             navController.navigate("admin_login")
         }
     }
 }
-

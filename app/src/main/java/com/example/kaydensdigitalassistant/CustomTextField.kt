@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -31,7 +32,7 @@ import androidx.compose.ui.unit.dp
 fun CustomTextField(
     value: String,
     onValueChange: (String) -> Unit,
-    placeholder: String
+    placeholder: String,
 ) {
     Box(
         modifier = Modifier
@@ -49,8 +50,11 @@ fun CustomTextField(
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent,
-                focusedPlaceholderColor = Color.Black
-            )
+                focusedPlaceholderColor = Color.Black,
+                unfocusedPlaceholderColor = Color.Black,
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
+            ),
         )
 
         Box(
@@ -90,7 +94,9 @@ fun CustomTextField(
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent,
-                focusedPlaceholderColor = Color.Black
+                focusedPlaceholderColor = Color.Black,
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
             ),
             trailingIcon = {
                 IconButton(onClick = {

@@ -39,9 +39,18 @@ android {
     buildFeatures {
         compose = true
     }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/NOTICE.md"
+            excludes += "/META-INF/LICENSE.md"
+        }
+    }
 }
 
 dependencies {
+    implementation(libs.android.mail)
+    implementation(libs.android.activation)
     implementation(libs.vico.compose)
     implementation(libs.vico.compose.m3)
 
