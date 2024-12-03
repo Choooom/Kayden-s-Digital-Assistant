@@ -103,13 +103,30 @@ fun ProvideCustomerDetailViewModel(viewModel: CustomerDetailViewModel, content: 
 
 @Composable
 fun SalesProvider(content: @Composable () -> Unit) {
-    val salesItemDao = AppDatabase.getInstance(LocalContext.current).salesItemDao()
-    val repository = SalesItemRepository(salesItemDao)
-    val viewModel: SalesItemViewModel = viewModel(factory = SalesItemViewModel.SalesItemViewModelFactory(repository))
+    val context = LocalContext.current
+    val database = AppDatabase.getInstance(context)
+
+    val salesItemDao = database.salesItemDao()
+    val customerDao = database.customerDetailDao()
+    val productsDao = database.productsDao()
+
+    val salesRepository = SalesItemRepository(salesItemDao)
+    val customerRepository = CustomerRepository(customerDao)
+    val productsRepository = ProductsRepository(productsDao)
+
+    val viewModel: SalesItemViewModel = viewModel(
+        factory = SalesItemViewModel.SalesItemViewModelFactory(
+            repository = salesRepository,
+            customerRepository = customerRepository,
+            productRepository = productsRepository
+        )
+    )
+
     ProvideSalesViewModel(viewModel) {
         content()
     }
 }
+
 
 @Composable
 fun ProvideSalesViewModel(viewModel: SalesItemViewModel, content: @Composable () -> Unit) {

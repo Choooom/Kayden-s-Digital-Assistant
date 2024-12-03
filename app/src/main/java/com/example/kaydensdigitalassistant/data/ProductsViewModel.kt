@@ -69,6 +69,18 @@ class ProductsViewModel(private val repository: ProductsRepository) : ViewModel(
         repository.deleteProduct(product)
     }
 
+    suspend fun getProductByName(name: String): Products? {
+        return repository.getProductByName(name)
+    }
+
+    fun restoreStockFromOrder(orderDetails: List<ReceiptItem>) {
+        viewModelScope.launch {
+            orderDetails.forEach { item ->
+                repository.restoreStock(item.name, item.quantity)
+            }
+        }
+    }
+
     class ProductsViewModelFactory(private val repository: ProductsRepository) :
         ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -110,5 +122,13 @@ class ProductsRepository(private val productsDao: ProductsDao) {
 
     fun getAllProductTypes(): Flow<List<String>> {
         return productsDao.getAllProductTypes()
+    }
+
+    suspend fun getProductByName(name: String): Products? {
+        return productsDao.getProductByName(name)
+    }
+
+    suspend fun restoreStock(productName: String, quantity: Double) {
+        productsDao.restoreStock(productName, quantity)
     }
 }

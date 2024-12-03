@@ -22,17 +22,27 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateMapOf
@@ -48,6 +58,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -87,6 +98,9 @@ fun SalesTracking(navController: NavController) {
 
     var isFirstLoad by remember { mutableStateOf(true) }
 
+    var showDatePicker by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
     LaunchedEffect(isFirstLoad) {
         val todayDate = getCurrentDate() // Get today's date
         selectedDate = "Sales Today" // Set the default selected date text
@@ -94,138 +108,205 @@ fun SalesTracking(navController: NavController) {
         isFirstLoad = false
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(top = insets.calculateTopPadding())
-            .background(Brush.horizontalGradient(colors = listOf(BlueStart, BlueEnd))),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        // Header section remains the same
-        TopBar(navController = navController, "SALES")
+    var searchQuery by remember { mutableStateOf("") }
+    val searchResults by salesViewModel.searchResults.collectAsState()
 
+    LaunchedEffect(searchQuery) {
+        salesViewModel.searchSales(searchQuery)
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.992f)
-                .clip(RoundedCornerShape(25.dp))
-                .background(Color.White),
+                .fillMaxSize()
+                .padding(top = insets.calculateTopPadding())
+                .background(Brush.horizontalGradient(colors = listOf(BlueStart, BlueEnd))),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            Row(
+            // Header section remains the same
+            TopBar(navController = navController, "SALES")
+
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(70.dp)
-                    .drawBehind {
-                        val borderSize = 2.dp.toPx()
-                        drawLine(
-                            color = dirtyWhite,
-                            start = Offset(0f, size.height),
-                            end = Offset(size.width, size.height),
-                            strokeWidth = borderSize
-                        )
-                    },
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(0.5f),
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "RECEIPT")
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(0.5f),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "$selectedDate ⌄",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        modifier = Modifier
-                            .clickable { isDropdownExpanded = true }
-                    )
-
-                    DropdownMenu(
-                        expanded = isDropdownExpanded,
-                        onDismissRequest = { isDropdownExpanded = false }
-                    ) {
-                        val allSalesList by salesViewModel.allSalesItems.observeAsState(emptyList())
-
-                        // Extract unique dates and sort them in descending order
-                        val uniqueDates = allSalesList.map { it.dateDelivered }
-                            .distinct()
-                            .sortedDescending()
-
-                        // Add "All Sales" as the first dropdown option
-                        DropdownMenuItem(
-                            onClick = {
-                                selectedDate = "All Sales"
-                                salesViewModel.filterSalesByDate(null) // Show all sales when "All Sales" is clicked
-                                isDropdownExpanded = false
-                            },
-                            text = { Text("All Sales") }
-                        )
-
-                        // Generate a dropdown item for each unique date
-                        uniqueDates.forEach { date ->
-                            DropdownMenuItem(
-                                onClick = {
-                                    selectedDate = if (date == getCurrentDate()) "Sales Today" else date
-                                    salesViewModel.filterSalesByDate(date) // Trigger filtering by the selected date
-                                    isDropdownExpanded = false
-                                },
-                                text = { Text(if (date == getCurrentDate()) "Sales Today" else date) }
-                            )
-                        }
-                    }
-                }
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .fillMaxHeight(0.99f)
-                    .padding(top = 20.dp)
+                    .fillMaxHeight(0.992f)
                     .clip(RoundedCornerShape(25.dp))
-                    .background(dirtyWhite)
+                    .background(Color.White),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
             ) {
-                LazyColumn(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Top
+                        .height(70.dp)
+                        .drawBehind {
+                            val borderSize = 2.dp.toPx()
+                            drawLine(
+                                color = dirtyWhite,
+                                start = Offset(0f, size.height),
+                                end = Offset(size.width, size.height),
+                                strokeWidth = borderSize
+                            )
+                        },
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.Bottom
                 ) {
-                    itemsIndexed(salesList) { index, salesItem ->
-                        LaunchedEffect(salesItem.salesId) {
-                            if (!customerDetailsMap.containsKey(salesItem.salesId)) {
-                                val customerDetails = customerViewModel.fetchCustomerById(salesItem.customerId)
-                                customerDetailsMap[salesItem.salesId] = customerDetails
+                    Row(
+                        modifier = Modifier.fillMaxWidth(0.5f),
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "RECEIPT")
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(0.5f),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "$selectedDate ⌄",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            modifier = Modifier
+                                .clickable { isDropdownExpanded = true }
+                        )
+
+                        DropdownMenu(
+                            expanded = isDropdownExpanded,
+                            onDismissRequest = { isDropdownExpanded = false }
+                        ) {
+                            val allSalesList by salesViewModel.allSalesItems.observeAsState(
+                                emptyList()
+                            )
+                            val currentDate = getCurrentDate()
+
+                            // Extract unique dates and sort them in descending order
+                            val uniqueDates = allSalesList.map { it.dateDelivered }
+                                .distinct()
+                                .sortedDescending()
+
+                            // Add "All Sales" as the first dropdown option
+                            DropdownMenuItem(
+                                onClick = {
+                                    selectedDate = "All Sales"
+                                    salesViewModel.filterSalesByDate(null)
+                                    isDropdownExpanded = false
+                                },
+                                text = { Text("All Sales") }
+                            )
+
+                            // Add "Sales Today" as the second option
+                            DropdownMenuItem(
+                                onClick = {
+                                    selectedDate = "Sales Today"
+                                    salesViewModel.filterSalesByDate(currentDate)
+                                    isDropdownExpanded = false
+                                },
+                                text = { Text("Sales Today") }
+                            )
+
+                            // Generate a dropdown item for each unique date
+                            uniqueDates.forEach { date ->
+                                if (date != currentDate) { // Skip current date as it's already shown as "Sales Today"
+                                    DropdownMenuItem(
+                                        onClick = {
+                                            selectedDate = date
+                                            salesViewModel.filterSalesByDate(date)
+                                            isDropdownExpanded = false
+                                        },
+                                        text = { Text(date) }
+                                    )
+                                }
                             }
                         }
-                        Spacer(modifier = Modifier.fillMaxWidth().height(if (index == 0) 20.dp else 10.dp))
-                        val customerDetails = customerDetailsMap[salesItem.salesId]
-                        SalesItem(
-                            navController = navController,
-                            name = customerDetails?.name ?: "Unknown Customer",
-                            address = customerDetails?.address ?: "Unknown Address",
-                            orderNumber = salesItem.salesId,
-                            date = salesItem.timeDelivered,
-                            orderBreakdown = salesItem.orderDetails
-                        ) {
-                            selectedOrderId = salesItem.salesId
-                            selectedCustomerId = salesItem.customerId
-                            println("Selected Order ID: $selectedOrderId")
-                            isReceiptExpanded = true
+                    }
+                }
+
+                TextField(
+                    value = searchQuery,
+                    onValueChange = { newQuery ->
+                        searchQuery = newQuery
+                    },
+                    placeholder = { Text("Search sales...") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .height(55.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = BlueStart,
+                        unfocusedIndicatorColor = dirtyWhite,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent
+                    )
+                )
+
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .fillMaxHeight(0.99f)
+                        .padding(top = 20.dp)
+                        .clip(RoundedCornerShape(25.dp))
+                        .background(dirtyWhite)
+                ) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Top
+                    ) {
+                        itemsIndexed(if (searchQuery.isEmpty()) salesList else searchResults) { index, salesItem ->
+                            LaunchedEffect(salesItem.salesId) {
+                                if (!customerDetailsMap.containsKey(salesItem.salesId)) {
+                                    val customerDetails =
+                                        customerViewModel.fetchCustomerById(salesItem.customerId)
+                                    customerDetailsMap[salesItem.salesId] = customerDetails
+                                }
+                            }
+                            Spacer(
+                                modifier = Modifier.fillMaxWidth()
+                                    .height(if (index == 0) 20.dp else 10.dp)
+                            )
+                            val customerDetails = customerDetailsMap[salesItem.salesId]
+                            SalesItem(
+                                navController = navController,
+                                name = customerDetails?.name ?: "Unknown Customer",
+                                address = customerDetails?.address ?: "Unknown Address",
+                                orderNumber = salesItem.salesId,
+                                date = salesItem.timeDelivered,
+                                orderBreakdown = salesItem.orderDetails
+                            ) {
+                                selectedOrderId = salesItem.salesId
+                                selectedCustomerId = salesItem.customerId
+                                println("Selected Order ID: $selectedOrderId")
+                                isReceiptExpanded = true
+                            }
                         }
                     }
                 }
             }
+        }
+        IconButton(
+            onClick = { showDatePicker = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 5.dp, bottom = 10.dp)
+                .background(
+                    color = BlueStart,
+                    shape = CircleShape
+                )
+                .size(56.dp)  // Standard FAB size
+        ) {
+            Icon(
+                imageVector = Icons.Default.Share,
+                contentDescription = "Export Sales",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 
@@ -233,6 +314,15 @@ fun SalesTracking(navController: NavController) {
         ReceiptDetails(selectedOrderId, selectedCustomerId) {
             isReceiptExpanded = false
         }
+    }
+
+    if (showDatePicker) {
+        CustomDatePickerDialog(
+            onDateSelected = { date ->
+                salesViewModel.exportSalesData(date, context)
+            },
+            onDismiss = { showDatePicker = false }
+        )
     }
 }
 
@@ -282,7 +372,7 @@ fun SalesItem(navController: NavController,
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ){
-                Icon(painter = painterResource(id = R.drawable.bookmark), contentDescription = "Bookmark", tint = bookmark, modifier = Modifier.size(20.dp))
+                Icon(painter = painterResource(id = R.drawable.bookmark), contentDescription = "Bookmark", tint = bookmark, modifier = Modifier.size(15.dp))
                 Text(text = "#$orderNumber", fontFamily = font_archivo, fontSize = 10.sp)
             }
         }
@@ -343,9 +433,13 @@ fun ReceiptDetails(orderId: Long?, customerId: Long?, onClose: () -> Unit){
     val salesViewModel = LocalSalesViewModel.current
     salesViewModel.fetchSalesBySalesId(orderId!!)
     val customerViewModel = LocalCustomerViewModel.current
+    val productsViewModel = LocalProductsViewModel.current
     val selectedSalesItem by salesViewModel.selectedSalesItem.observeAsState()
     val customerDetailState = remember { mutableStateOf<CustomerDetail?>(null) }
     val insets = WindowInsets.systemBars.asPaddingValues()
+
+    val userRoleViewModel = LocalUserRoleViewModel.current
+    val isAdmin by userRoleViewModel.isAdmin.collectAsState()
 
     LaunchedEffect(orderId) {
         orderId?.let {
@@ -358,6 +452,31 @@ fun ReceiptDetails(orderId: Long?, customerId: Long?, onClose: () -> Unit){
             val fetchedCustomerDetail = customerViewModel.fetchCustomerById(it)
             customerDetailState.value = fetchedCustomerDetail
         }
+    }
+
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Confirm Deletion", fontFamily = kanit_bold) },
+            text = { Text("Are you sure you want to delete this sale? This action cannot be undone.", fontFamily = font_abeezee) },
+            confirmButton = {
+                TextButton(onClick = {
+                    salesViewModel.deleteSalesById(orderId)
+                    selectedSalesItem?.let { productsViewModel.restoreStockFromOrder(it.orderDetails) }
+                    showDeleteDialog = false
+                    onClose()
+                }) {
+                    Text("Delete", color = Color.Red, fontFamily = kanit_bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel", fontFamily = kanit_bold)
+                }
+            }
+        )
     }
 
     Column(modifier = Modifier.fillMaxWidth().fillMaxHeight().padding(top = insets.calculateTopPadding())
@@ -399,6 +518,13 @@ fun ReceiptDetails(orderId: Long?, customerId: Long?, onClose: () -> Unit){
                     modifier = Modifier.clickable {
                         onClose()
                     })
+                Spacer(modifier = Modifier.fillMaxWidth(0.9f))
+                if(isAdmin){
+                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete",
+                        modifier = Modifier.clickable {
+                            showDeleteDialog = true
+                        },tint = Color.Red)
+                }
             }
             Row(modifier = Modifier.fillMaxWidth()
                 .padding(start = 20.dp, top = 10.dp), horizontalArrangement = Arrangement.Start)
@@ -436,6 +562,7 @@ fun ReceiptDetails(orderId: Long?, customerId: Long?, onClose: () -> Unit){
                 Text(text = "STATUS", fontFamily = font_notosans_bold, fontSize = 30.sp,
                     modifier = Modifier
                         .padding(start = 20.dp).align(Alignment.Top))
+
                 Spacer(modifier = Modifier.width(20.dp))
                 Text("  Delivered  ", fontFamily = font_notosans_bold,
                     modifier = Modifier.padding(top = 13.dp).background(ButtonGreen))
@@ -485,17 +612,50 @@ fun ReceiptDetails(orderId: Long?, customerId: Long?, onClose: () -> Unit){
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(start = 20.dp, top = 10.dp)
+                        .height(55.dp) ,
+                    verticalAlignment = Alignment.CenterVertically  // Center all items vertically
                 ){
-                    Icon(imageVector = Icons.Default.AccountCircle, contentDescription = "Profile",
-                        modifier = Modifier.size(55.dp))
+                    Icon(
+                        imageVector = Icons.Default.AccountCircle,
+                        contentDescription = "Profile",
+                        modifier = Modifier.size(55.dp)
+                    )
                     Column(
-                        modifier = Modifier.padding(start = 10.dp)
-                            .fillMaxWidth(),
+                        modifier = Modifier
+                            .padding(start = 10.dp)
+                            .fillMaxHeight(),  // Fill Row height
                         horizontalAlignment = Alignment.Start,
                         verticalArrangement = Arrangement.Center
                     ){
-                        Text(text = customerDetailState.value?.name ?: "", fontFamily = font_notosans_bold, fontSize = 15.sp)
-                        Text(text = customerDetailState.value?.contactNumber ?: "", fontFamily = font_notosans_bold, fontSize = 12.sp)
+                        Text(text = customerDetailState.value?.name ?: "",
+                            fontFamily = font_notosans_bold,
+                            fontSize = 15.sp)
+                        Text(text = customerDetailState.value?.contactNumber ?: "",
+                            fontFamily = font_notosans_bold,
+                            fontSize = 12.sp)
+                    }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxHeight()  // Fill Row height
+                            .fillMaxWidth()
+                            .padding(start = 20.dp),
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        val paymentOption = selectedSalesItem?.paymentOption
+                        val paymentMethod = selectedSalesItem?.paymentMethod
+                        Text(
+                            text = "Payment Option: ${paymentOption?: "Regular"}",
+                            fontFamily = font_notosans_bold,
+                            fontSize = 10.sp,
+                            modifier = Modifier.padding(start = 15.dp)
+                        )
+                        Text(
+                            text = "Payment Method: ${paymentMethod?: "Cash"}",
+                            fontFamily = font_notosans_bold,
+                            fontSize = 10.sp,
+                            modifier = Modifier.padding(start = 15.dp)
+                        )
                     }
                 }
                 Column(
@@ -505,12 +665,17 @@ fun ReceiptDetails(orderId: Long?, customerId: Long?, onClose: () -> Unit){
                     verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.End
                 ){
-
                     OrderDetails(salesViewModel.selectedSalesItem.value?.orderDetails ?: emptyList())
 
                     val getTotal = selectedSalesItem?.totalAmount ?: 0.0
+                    val getDeposit = selectedSalesItem?.deposit ?: 0.0
 
-                    Text(text = "Total: ₱${getTotal}", fontFamily = font_notosans_bold, fontSize = 13.sp, modifier = Modifier.padding(end = 20.dp, top = 5.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically){
+                        if(getDeposit > 0.0){
+                            Text(text = "Deposit: ₱${getDeposit}", fontFamily = font_notosans_bold, fontSize = 13.sp, modifier = Modifier.padding(end = 20.dp, top = 5.dp))
+                        }
+                        Text(text = "Total: ₱${getTotal + getDeposit}", fontFamily = font_notosans_bold, fontSize = 13.sp, modifier = Modifier.padding(end = 20.dp, top = 5.dp))
+                    }
                 }
             }
         }

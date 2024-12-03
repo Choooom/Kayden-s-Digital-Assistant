@@ -36,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -46,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -55,6 +57,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.kaydensdigitalassistant.data.Products
 import com.example.kaydensdigitalassistant.data.ReceiptItem
 import com.example.kaydensdigitalassistant.ui.theme.BlueEnd
 import com.example.kaydensdigitalassistant.ui.theme.BlueStart
@@ -81,9 +84,34 @@ fun GenerateReceipt(navController: NavController) {
     }
 
     val receiptViewModel = LocalReceiptViewModel.current
+    val receiptViewModels = LocalProductsViewModel.current
+    val customerViewModel = LocalCustomerViewModel.current
+    val currentCustomer = customerViewModel.currentCustomer.value
+
+    var deposit by remember { mutableDoubleStateOf(0.0) }
+
+    LaunchedEffect(Unit) {
+        if (currentCustomer.preferredOrder.isNotEmpty() && receiptViewModel.receiptItemsState.isEmpty()) {
+            // Get product details for each preferred item
+            currentCustomer.preferredOrder.forEach { productName ->
+                // Assuming you have a method to get product details by name
+                val product = receiptViewModels.getProductByName(productName)
+                product?.let {
+                    receiptViewModel.addProductItem(
+                        ReceiptItem(
+                            name = it.productName,
+                            type = it.type,
+                            amount = if (receiptViewModel.isDiscounted) it.discountedPrice else it.normalPrice,
+                            quantity = 1.0
+                        )
+                    )
+                }
+            }
+        }
+    }
 
 
-    val totalAmount by rememberUpdatedState(newValue = receiptViewModel.receiptItemsState.sumOf { it.amount * it.quantity })
+    val totalAmount by rememberUpdatedState(newValue = receiptViewModel.receiptItemsState.sumOf { it.amount * it.quantity } + deposit)
 
     val totalAmountDisplay = buildAnnotatedString {
         withStyle(style = SpanStyle(fontFamily = font_archivo_light, fontSize = 15.sp)) {
@@ -131,7 +159,12 @@ fun GenerateReceipt(navController: NavController) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Go Back",
-                    modifier = Modifier.clickable { navController.navigate("selectCustomer")}
+                    modifier = Modifier.clickable {
+                        navController.navigateWithPopUp(
+                            route = "selectCustomer",
+                            popUpToRoute = "INITIALIZATION_MODE",
+                            inclusive = true
+                        )}
                 )
                 Spacer(modifier = Modifier.width(20.dp))
                 CustomDropdownMenu(
@@ -149,6 +182,13 @@ fun GenerateReceipt(navController: NavController) {
                     onOptionSelected = { selectedPricingOption = it },
                     placeholder = "Regular"
                 )
+                Row(modifier = Modifier.fillMaxWidth().padding(bottom = 5.dp, end = 10.dp), horizontalArrangement = Arrangement.End) {
+                    CustomDoubleTextField(
+                        value = deposit,
+                        onValueChange = { deposit = it },
+                        placeholder = "Deposit"
+                    )
+                }
             }
             Column(
                 modifier = Modifier
@@ -209,11 +249,16 @@ fun GenerateReceipt(navController: NavController) {
                             .padding(0.dp)
                             .clickable {
                                 println(selectedPaymentOption)
-                                if (totalAmount != 0.0) navController.navigate("receiptPreview/$selectedPaymentOption/$selectedPricingOption")
+                                if (totalAmount != 0.0) navController.navigateWithPopUp(
+                                    route = "receiptPreview/$selectedPaymentOption/$selectedPricingOption/${deposit.toFloat()}",
+                                    popUpToRoute = "INITIALIZATION_MODE",
+                                    inclusive = true
+                                )
                             },
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    )
+                    {
                         Text(
                             text = "Proceed",
                             fontFamily = font_notosans_bold,
@@ -296,6 +341,14 @@ fun ProductItem(
 ) {
 
     var isEmpty by remember { mutableStateOf(false) }
+    val productsViewModel = LocalProductsViewModel.current
+    val icon = productsViewModel.productIcons[name]
+
+    var product by remember { mutableStateOf<Products?>(null) }
+
+    LaunchedEffect(name) {
+        product = productsViewModel.getProductByName(name)
+    }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -326,42 +379,50 @@ fun ProductItem(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = painterResource(
-                            id =
-                            when (name) {
-                                "Red Horse 1000 ML (Mucho)" -> R.drawable.mucho
-                                "Red Horse 500 ML" -> R.drawable.redhorse_500
-                                "Red Horse 330 ML (Stallion)" -> R.drawable.stallion
-                                "Pale Pilsen 1000 ML (Grande)" -> R.drawable.grande
-                                "Pale Pilsen 320 ML" -> R.drawable.pilsen_small
-                                "San Mig Light 330 ML" -> R.drawable.sanmig_light
-                                "San Mig Apple 330 ML" -> R.drawable.sanmig_apple
-                                "RC Original Small 240 ML" -> R.drawable.rc_small
-                                "RC Orange Small 240 ML" -> R.drawable.orange_small
-                                "RC Lemon Small 240 ML" -> R.drawable.lemon_small
-                                "RC Root Beer Small 240 ML" -> R.drawable.rootbeer_small
-                                "RC Mega Original 800 ML" -> R.drawable.rc_mega
-                                "RC Mega Orange 800 ML" -> R.drawable.orange_mega
-                                "RC Mega Lemon 800 ML" -> R.drawable.lemon_mega
-                                "Cobra Original (Yellow) 240 ML" -> R.drawable.cobra_yellow
-                                "Cobra Citrus (Green) 240 ML" -> R.drawable.cobra_green
-                                else -> R.drawable.plus
-                            }
-                        ),
-                        contentDescription = name,
-                        modifier = Modifier
-                            .size(65.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .clickable {
-                                isEmpty = true
-                            },
-                        colorFilter = if (name == "") {
-                            ColorFilter.tint(Color.White)
-                        } else {
-                            null
-                        },
-                    )
+
+                    if(name != ""){
+                        if (icon != null) {
+                            Image(
+                                bitmap = icon.asImageBitmap(),
+                                contentDescription = name,
+                                modifier = Modifier
+                                    .size(65.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable {
+                                        isEmpty = true
+                                    }
+                            )
+                        }else{
+                            Image(
+                                painter = painterResource(id = R.drawable.plus),
+                                contentDescription = name,
+                                modifier = Modifier
+                                    .size(65.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable {
+                                        isEmpty = true
+                                    },
+                                colorFilter = if (name == "") {
+                                    ColorFilter.tint(Color.White)
+                                } else {
+                                    null
+                                },
+                            )
+                        }
+                    }else{
+                        Image(
+                            painter = painterResource(id = R.drawable.plus),
+                            contentDescription = name,
+                            modifier = Modifier
+                                .size(65.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable {
+                                    isEmpty = true
+                                },
+                            colorFilter = ColorFilter.tint(Color.White),
+                        )
+                    }
+
                 }
                 Column(
                     modifier = Modifier
@@ -443,7 +504,7 @@ fun ProductItem(
                                     var updatedQuantity = quantity
 
                                     if (updatedQuantity > 0) {
-                                        if (type != "Beer") {
+                                        if (product?.isHalfable == true) {
                                             updatedQuantity -= 0.5
                                             onSubtractQuantity(updatedQuantity, index)
                                         } else {
@@ -479,7 +540,7 @@ fun ProductItem(
                                 .weight(0.9f)
                                 .clickable {
                                     var updatedQuantity = quantity
-                                    if (type != "Beer") {
+                                    if (product?.isHalfable == true) {
                                         updatedQuantity += 0.5
                                         onAddQuantity(updatedQuantity, index)
                                     } else {

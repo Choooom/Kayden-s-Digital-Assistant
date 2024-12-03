@@ -36,4 +36,5 @@ interface CustomerDetailDao {
 
     @Delete
     suspend fun deleteCustomer(customer: CustomerDetail)
+
 }

@@ -39,9 +39,23 @@ android {
     buildFeatures {
         compose = true
     }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/NOTICE.md"
+            excludes += "/META-INF/LICENSE.md"
+        }
+    }
 }
 
 dependencies {
+
+    implementation(libs.apache.poi)
+    implementation(libs.apache.poi.ooxml)
+    implementation(libs.apache.poi.ooxml.lite)
+
+    implementation(libs.android.mail)
+    implementation(libs.android.activation)
     implementation(libs.vico.compose)
     implementation(libs.vico.compose.m3)
 
@@ -65,6 +79,7 @@ dependencies {
     implementation(libs.androidx.adapters)
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.firebase.auth)
+    implementation(libs.androidx.runtime.android)
     kapt(libs.androidx.room.compiler)
 
     implementation(libs.gson)

@@ -28,6 +28,10 @@ firebaseAuth = "23.1.0"
 osmdroid = "6.1.16"
 osmbonuspack = "6.9.0"
 vico = "1.13.1"
+mail = "1.6.7"
+apache-poi = "5.2.3"
+apache-poi-ooxml-lite = "5.2.3"
+runtimeAndroid = "1.7.8"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -71,6 +75,12 @@ osmdroid-third-party = { group = "org.osmdroid", name = "osmdroid-third-party", 
 osmdroid-bonuspack = { group = "com.github.MKergall", name = "osmbonuspack", version.ref = "osmbonuspack" }
 vico-compose = { group = "com.patrykandpatrick.vico", name = "compose", version.ref = "vico" }
 vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
+android-mail = { group = "com.sun.mail", name = "android-mail", version.ref = "mail" }
+android-activation = { group = "com.sun.mail", name = "android-activation", version.ref = "mail" }
+apache-poi = { group = "org.apache.poi", name = "poi", version.ref = "apache-poi" }
+apache-poi-ooxml = { group = "org.apache.poi", name = "poi-ooxml", version.ref = "apache-poi" }
+apache-poi-ooxml-lite = { group = "org.apache.poi", name = "poi-ooxml-lite", version.ref = "apache-poi-ooxml-lite" }
+androidx-runtime-android = { group = "androidx.compose.runtime", name = "runtime-android", version.ref = "runtimeAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

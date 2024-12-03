@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -85,7 +86,7 @@ fun Inventory(navController: NavController) {
     val allProducts by productsViewModel.allProducts.observeAsState(initial = emptyList())
     val insets = WindowInsets.systemBars.asPaddingValues()
 
-    var itemType by remember { mutableStateOf("Beer") }
+    var itemType by remember { mutableStateOf("All") }
     var searchQuery by remember { mutableStateOf("") }
     var isTypeMenuExpanded by remember { mutableStateOf(false) }
 
@@ -489,6 +490,7 @@ fun EditProductDialog(
     var normalPrice by remember { mutableStateOf(product.normalPrice.toString()) }
     var discountedPrice by remember { mutableStateOf(product.discountedPrice.toString()) }
     var stock by remember { mutableStateOf(product.stock.toString()) }
+    var isHalfable by remember { mutableStateOf(product.isHalfable) }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -555,6 +557,19 @@ fun EditProductDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = isHalfable,
+                        onCheckedChange = { isHalfable = it }
+                    )
+                    Text("Can be sold in half")
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
@@ -564,7 +579,8 @@ fun EditProductDialog(
                             type = type,
                             normalPrice = normalPrice.toDoubleOrNull() ?: 0.0,
                             discountedPrice = discountedPrice.toDoubleOrNull() ?: 0.0,
-                            stock = stock.toDoubleOrNull() ?: 0.0
+                            stock = stock.toDoubleOrNull() ?: 0.0,
+                            isHalfable = isHalfable
                         )
                         viewModel.updateProduct(updatedProduct)
                         onDismiss()
@@ -577,6 +593,7 @@ fun EditProductDialog(
         }
     }
 }
+
 
 @Composable
 fun DeleteProductDialog(

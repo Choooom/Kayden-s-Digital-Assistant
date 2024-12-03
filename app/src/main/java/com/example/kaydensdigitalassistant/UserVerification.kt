@@ -55,6 +55,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.lifecycle.ViewModel
 import com.example.kaydensdigitalassistant.data.EmployeeDetailViewModel
 import com.example.kaydensdigitalassistant.ui.theme.BlueEnd
@@ -140,7 +142,9 @@ fun NumberVerification(navController: NavController){
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White,
                     focusedIndicatorColor = BlueEnd,
-                    unfocusedIndicatorColor = BlueEnd
+                    unfocusedIndicatorColor = BlueEnd,
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
                 )
             )
 
@@ -201,8 +205,8 @@ fun UserVerification(navController: NavController){
 
     Box(modifier = Modifier.fillMaxWidth().fillMaxHeight().background(
         Brush.horizontalGradient(
-        colors = listOf(BlueStart, BlueEnd)
-    ))){
+            colors = listOf(BlueStart, BlueEnd)
+        ))){
         Column(modifier = Modifier.fillMaxWidth().fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally){
             Spacer(modifier = Modifier.height(150.dp).fillMaxWidth())
             Row(
@@ -238,6 +242,11 @@ fun UserVerification(navController: NavController){
             BasicTextField(
                 value = otp,
                 onValueChange = { if(otp.length <= 6) otp = it },
+                textStyle = TextStyle(
+                    color = Color.Black,
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily.Default
+                ),
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
                     .padding(8.dp, top = 50.dp),
@@ -325,7 +334,7 @@ fun onLoginClicked(context: Context, navController: NavController, phoneNumber: 
 
         override fun onVerificationFailed(p0: FirebaseException) {
             Log.d("phoneBook", "verification failed$p0")
-            
+
         }
 
         override fun onCodeSent(p0: String, p1: PhoneAuthProvider.ForceResendingToken){
@@ -504,7 +513,9 @@ fun PasswordResetScreen(navController: NavController) {
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White,
                     focusedIndicatorColor = BlueEnd,
-                    unfocusedIndicatorColor = BlueEnd
+                    unfocusedIndicatorColor = BlueEnd,
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
                 ),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
@@ -560,7 +571,7 @@ fun PasswordResetScreen(navController: NavController) {
 
 @Composable
 fun EmailVerification(navController: NavController) {
-    
+
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -630,7 +641,9 @@ fun EmailVerification(navController: NavController) {
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White,
                     focusedIndicatorColor = BlueEnd,
-                    unfocusedIndicatorColor = BlueEnd
+                    unfocusedIndicatorColor = BlueEnd,
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
                 ),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
@@ -655,7 +668,9 @@ fun EmailVerification(navController: NavController) {
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White,
                     focusedIndicatorColor = BlueEnd,
-                    unfocusedIndicatorColor = BlueEnd
+                    unfocusedIndicatorColor = BlueEnd,
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black
                 ),
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)

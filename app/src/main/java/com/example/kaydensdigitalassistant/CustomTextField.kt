@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -23,15 +26,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.kaydensdigitalassistant.ui.theme.BlueStart
+import com.example.kaydensdigitalassistant.ui.theme.dirtyWhite
 
 @Composable
 fun CustomTextField(
     value: String,
     onValueChange: (String) -> Unit,
-    placeholder: String
+    placeholder: String,
 ) {
     Box(
         modifier = Modifier
@@ -49,8 +57,11 @@ fun CustomTextField(
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent,
-                focusedPlaceholderColor = Color.Black
-            )
+                focusedPlaceholderColor = Color.Black,
+                unfocusedPlaceholderColor = Color.Black,
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
+            ),
         )
 
         Box(
@@ -90,7 +101,9 @@ fun CustomTextField(
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
                 unfocusedContainerColor = Color.Transparent,
-                focusedPlaceholderColor = Color.Black
+                focusedPlaceholderColor = Color.Black,
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black
             ),
             trailingIcon = {
                 IconButton(onClick = {
@@ -114,3 +127,66 @@ fun CustomTextField(
         )
     }
 }
+
+@Composable
+fun CustomDoubleTextField(
+    value: Double,
+    onValueChange: (Double) -> Unit,
+    placeholder: String
+) {
+    var textValue by remember { mutableStateOf(if (value == 0.0) "" else value.toString()) }
+
+    Box(
+        modifier = Modifier
+            .width(120.dp)
+            .height(40.dp)
+    ) {
+        BasicTextField(
+            value = textValue,
+            onValueChange = { newValue ->
+                if (newValue.isEmpty()) {
+                    textValue = ""
+                    onValueChange(0.0)
+                } else {
+                    newValue.toDoubleOrNull()?.let { number ->
+                        textValue = newValue
+                        onValueChange(number)
+                    }
+                }
+            },
+            textStyle = TextStyle(
+                fontSize = 14.sp,
+                color = Color.Black
+            ),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Decimal
+            ),
+            singleLine = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.Center)
+        ) { innerTextField ->
+            Box(
+                contentAlignment = Alignment.CenterStart
+            ) {
+                if (textValue.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                }
+                innerTextField()
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color.Black)
+        )
+    }
+}
+

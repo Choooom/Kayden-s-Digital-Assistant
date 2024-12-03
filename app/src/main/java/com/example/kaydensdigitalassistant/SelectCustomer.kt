@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,17 +26,21 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -56,9 +61,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import com.example.kaydensdigitalassistant.data.CustomerDetail
 import com.example.kaydensdigitalassistant.data.CustomerDetailViewModel
+import com.example.kaydensdigitalassistant.data.EmployeeDetail
 import com.example.kaydensdigitalassistant.data.Products
 import com.example.kaydensdigitalassistant.ui.theme.BlueEnd
 import com.example.kaydensdigitalassistant.ui.theme.BlueStart
@@ -76,43 +85,45 @@ fun SelectCustomer(navController: NavController){
     val receiptViewModel = LocalReceiptViewModel.current
 
     /*
-        val appViewModel = LocalAppViewModel.current
-        appViewModel.clearAllData()
-   */
-/*
-    val productViewModel = LocalProductsViewModel.current
-    val context = LocalContext.current
+    val employeeViewModel = LocalEmployeeViewModel.current
+    employeeViewModel.insertEmployee(EmployeeDetail(1, "BongBong", "09296726163", "romilleilaida420@gmail.com", "12/20/2003",  "123456", "BongBong"))
 
-    fun getBitmap(drawableId: Int): Bitmap {
-        return BitmapFactory.decodeResource(context.resources, drawableId)
-    }
+    val appViewModel = LocalAppViewModel.current
+    appViewModel.clearAllData()
 
-    val productsList = listOf(
-        Products(productName = "Red Horse 1000 ML (Mucho)", type = "Beer", normalPrice = 630.0, discountedPrice = 628.0, stock = 100.0, productIcon = getBitmap(R.drawable.mucho)),
-        Products(productName = "Red Horse 500 ML", type = "Beer", normalPrice = 620.0, discountedPrice = 615.0, stock = 100.0, productIcon = getBitmap(R.drawable.redhorse_500)),
-        Products(productName = "Red Horse 330 ML (Stallion)", type = "Beer", normalPrice = 860.0, discountedPrice = 853.0, stock = 100.0, productIcon = getBitmap(R.drawable.stallion)),
-        Products(productName = "Pale Pilsen 1000 ML (Grande)", type = "Beer", normalPrice = 550.0, discountedPrice = 544.0, stock = 100.0, productIcon = getBitmap(R.drawable.grande)),
-        Products(productName = "Pale Pilsen 320 ML", type = "Beer", normalPrice = 820.0, discountedPrice = 800.0, stock = 100.0, productIcon = getBitmap(R.drawable.pilsen_small)),
-        Products(productName = "San Mig Light 330 ML", type = "Beer", normalPrice = 1040.0, discountedPrice = 1020.0, stock = 100.0, productIcon = getBitmap(R.drawable.sanmig_light)),
-        Products(productName = "San Mig Apple 330 ML", type = "Beer", normalPrice = 800.0, discountedPrice = 778.0, stock = 100.0, productIcon = getBitmap(R.drawable.sanmig_apple)),
-        Products(productName = "RC Original Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.rc_small)),
-        Products(productName = "RC Orange Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.orange_small)),
-        Products(productName = "RC Lemon Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.lemon_small)),
-        Products(productName = "RC Root Beer Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.rootbeer_small)),
-        Products(productName = "RC Mega Original 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.rc_mega)),
-        Products(productName = "RC Mega Orange 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.orange_mega)),
-        Products(productName = "RC Mega Lemon 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.lemon_mega)),
-        Products(productName = "Cobra Original (Yellow) 240 ML", type = "Energy-Drink", normalPrice = 300.0, discountedPrice = 295.0, stock = 100.0, productIcon = getBitmap(R.drawable.cobra_yellow)),
-        Products(productName = "Cobra Citrus (Green) 240 ML", type = "Energy-Drink", normalPrice = 300.0, discountedPrice = 295.0, stock = 100.0, productIcon = getBitmap(R.drawable.cobra_green))
-    )
 
-    LaunchedEffect(key1 = Unit) {
-        productsList.forEach { product ->
-            productViewModel.insertProduct(product)
+        val productViewModel = LocalProductsViewModel.current
+        val context = LocalContext.current
+
+        fun getBitmap(drawableId: Int): Bitmap {
+            return BitmapFactory.decodeResource(context.resources, drawableId)
         }
-    }
-*/
 
+        val productsList = listOf(
+            Products(productName = "Red Horse 1000 ML (Mucho)", type = "Beer", normalPrice = 640.0, discountedPrice = 628.0, stock = 100.0, productIcon = getBitmap(R.drawable.mucho)),
+            Products(productName = "Red Horse 500 ML", type = "Beer", normalPrice = 628.0, discountedPrice = 615.0, stock = 100.0, productIcon = getBitmap(R.drawable.redhorse_500)),
+            Products(productName = "Red Horse 330 ML (Stallion)", type = "Beer", normalPrice = 945.0, discountedPrice = 930.0, stock = 100.0, productIcon = getBitmap(R.drawable.stallion)),
+            Products(productName = "Pale Pilsen 1000 ML (Grande)", type = "Beer", normalPrice = 610.0, discountedPrice = 600.0, stock = 100.0, productIcon = getBitmap(R.drawable.grande)),
+            Products(productName = "Pale Pilsen 320 ML", type = "Beer", normalPrice = 880.0, discountedPrice = 865.0, stock = 100.0, productIcon = getBitmap(R.drawable.pilsen_small)),
+            Products(productName = "San Mig Light 330 ML", type = "Beer", normalPrice = 1035.0, discountedPrice = 1020.0, stock = 100.0, productIcon = getBitmap(R.drawable.sanmig_light)),
+            Products(productName = "San Mig Apple 330 ML", type = "Beer", normalPrice = 860.0, discountedPrice = 845.0, stock = 100.0, productIcon = getBitmap(R.drawable.sanmig_apple)),
+            Products(productName = "RC Original Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.rc_small)),
+            Products(productName = "RC Orange Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.orange_small)),
+            Products(productName = "RC Lemon Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.lemon_small)),
+            Products(productName = "RC Root Beer Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.rootbeer_small)),
+            Products(productName = "RC Mega Original 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.rc_mega)),
+            Products(productName = "RC Mega Orange 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.orange_mega)),
+            Products(productName = "RC Mega Lemon 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.lemon_mega)),
+            Products(productName = "Cobra Original (Yellow) 240 ML", type = "Energy-Drink", normalPrice = 300.0, discountedPrice = 295.0, stock = 100.0, productIcon = getBitmap(R.drawable.cobra_yellow)),
+            Products(productName = "Cobra Citrus (Green) 240 ML", type = "Energy-Drink", normalPrice = 300.0, discountedPrice = 295.0, stock = 100.0, productIcon = getBitmap(R.drawable.cobra_green))
+        )
+
+        LaunchedEffect(key1 = Unit) {
+            productsList.forEach { product ->
+                productViewModel.insertProduct(product)
+            }
+        }
+*/
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -171,7 +182,11 @@ fun SelectCustomer(navController: NavController){
             },customerPicked = {
                 isClosed = true
                 receiptViewModel.receiptItemsState.clear()
-                navController.navigate("receipt")
+                navController.navigateWithPopUp(
+                    route = "receipt",
+                    popUpToRoute = "INITIALIZATION_MODE",
+                    inclusive = true
+                )
             }
             )
         }
@@ -180,115 +195,172 @@ fun SelectCustomer(navController: NavController){
 
 @Composable
 fun SelectOldCustomer(onClose: () -> Unit, customerPicked: (CustomerDetail) -> Unit, navController: NavController) {
-    val customerViewModel = LocalCustomerViewModel.current
-    val customerDetails by customerViewModel.customerDetails.collectAsState(initial = emptyList())
-    var searchQuery by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
-        customerViewModel.resetCurrentCustomer()
-    }
+    key(Unit) {
+        val customerViewModel = LocalCustomerViewModel.current
+        val customerDetails by customerViewModel.customerDetails.collectAsState(initial = emptyList())
+        var searchQuery by remember { mutableStateOf("") }
 
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .fillMaxHeight(0.5f)
-                .clip(RoundedCornerShape(20.dp))
-                .animateContentSize()
-                .background(Color.White),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+        LaunchedEffect(Unit) {
+            customerViewModel.emptySearchQuery()
+            searchQuery = ""
+        }
+
+        val lifecycleOwner = LocalLifecycleOwner.current
+        DisposableEffect(lifecycleOwner) {
+            val observer = LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    customerViewModel.emptySearchQuery()
+                    searchQuery = ""
+                }
+            }
+            lifecycleOwner.lifecycle.addObserver(observer)
+            onDispose {
+                lifecycleOwner.lifecycle.removeObserver(observer)
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            customerViewModel.resetCurrentCustomer()
+        }
+
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp, start = 5.dp),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Go Back",
-                    modifier = Modifier.clickable { onClose() }
-                )
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(0.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Old Customer", fontFamily = font_archivo, color = BlueEnd, fontSize = 30.sp)
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = {
-                        searchQuery = it
-                        customerViewModel.setSearchQuery(it)
-                    },
-                    placeholder = { Text("Search customers") },
-                    modifier = Modifier.weight(1f)
-                )
-
-                IconButton(onClick = { customerViewModel.setSortOrder(CustomerDetailViewModel.SortOrder.BY_NAME) }) {
-                    Icon(Icons.Default.KeyboardArrowDown, "Sort by name")
-                }
-
-                IconButton(onClick = { customerViewModel.setSortOrder(CustomerDetailViewModel.SortOrder.BY_ADDRESS) }) {
-                    Icon(Icons.Default.LocationOn, "Sort by address")
-                }
-            }
-
             Column(
                 modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .fillMaxHeight(0.9f)
+                    .fillMaxWidth(0.9f)
+                    .fillMaxHeight(0.7f)
+                    .clip(RoundedCornerShape(20.dp))
+                    .animateContentSize()
+                    .background(Color.White),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
             ) {
-
-
-                LazyColumn(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Color.White)
-                        .drawBehind {
-                            drawRoundRect(
-                                color = dirtyWhite,
-                                size = size,
-                                style = Stroke(width = 10.dp.toPx()), // Border width
-                                cornerRadius = CornerRadius(
-                                    20.dp.toPx(),
-                                    20.dp.toPx()
+                        .padding(top = 10.dp, start = 5.dp),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Go Back",
+                        modifier = Modifier.clickable { onClose() }
+                    )
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(0.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Old Customer",
+                        fontFamily = font_archivo,
+                        color = BlueEnd,
+                        fontSize = 30.sp
+                    )
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    TextField(
+                        value = searchQuery,
+                        onValueChange = {
+                            searchQuery = it
+                            customerViewModel.setSearchQuery(it)
+                        },
+                        placeholder = { Text("Search customer...") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .height(55.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedIndicatorColor = BlueStart,
+                            unfocusedIndicatorColor = dirtyWhite,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedContainerColor = Color.Transparent
+                        )
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Sort By Name",
+                        modifier = Modifier.clickable {
+                            customerViewModel.setSortOrder(
+                                CustomerDetailViewModel.SortOrder.BY_NAME
+                            )
+                        },
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = kanit_bold
+                    )
+                    Text(
+                        text = "Sort By Address",
+                        modifier = Modifier.clickable {
+                            customerViewModel.setSortOrder(
+                                CustomerDetailViewModel.SortOrder.BY_ADDRESS
+                            )
+                        },
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = kanit_bold
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
+                        .fillMaxHeight(0.9f)
+                ) {
+
+
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color.White)
+                            .drawBehind {
+                                drawRoundRect(
+                                    color = dirtyWhite,
+                                    size = size,
+                                    style = Stroke(width = 10.dp.toPx()), // Border width
+                                    cornerRadius = CornerRadius(
+                                        20.dp.toPx(),
+                                        20.dp.toPx()
+                                    )
                                 )
+                            }
+                            .padding(10.dp)
+                    ) {
+                        itemsIndexed(customerDetails) { index, customer ->
+                            CustomerItem(
+                                name = customer.name,
+                                contact = customer.contactNumber,
+                                address = customer.address,
+                                customerId = customer.customerId,
+                                isSelected = {
+                                    customerViewModel.searchAndUpdateCustomer(customer.name)
+                                    customerPicked(customer)
+                                },
+                                navController = navController
                             )
                         }
-                        .padding(10.dp)
-                ) {
-                    itemsIndexed(customerDetails) { index, customer ->
-                        CustomerItem(
-                            name = customer.name,
-                            contact = customer.contactNumber,
-                            address = customer.address,
-                            customerId = customer.customerId,
-                            isSelected = {
-                                customerViewModel.searchAndUpdateCustomer(customer.name)
-                                customerPicked(customer)
-                            },
-                            navController = navController
-                        )
                     }
                 }
             }
@@ -302,10 +374,7 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
     var fullName by remember { mutableStateOf("") }
     var contactNumber by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
-
-    LaunchedEffect(Unit) {
-        customerViewModel.resetCurrentCustomer()
-    }
+    var isCustomerInserted by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -314,7 +383,7 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .fillMaxHeight(0.6f)
+                .fillMaxHeight(0.9f)
                 .clip(RoundedCornerShape(20.dp))
                 .animateContentSize()
                 .background(Color.White),
@@ -353,6 +422,7 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
+                // Name Field
                 Row(modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 45.dp), horizontalArrangement = Arrangement.Start) {
@@ -379,9 +449,13 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
                         focusedIndicatorColor = BlueEnd,
-                        unfocusedIndicatorColor = BlueEnd
+                        unfocusedIndicatorColor = BlueEnd,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
                     )
                 )
+
+                // Contact Number Field
                 Row(modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 45.dp), horizontalArrangement = Arrangement.Start) {
@@ -408,9 +482,13 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
                         focusedIndicatorColor = BlueEnd,
-                        unfocusedIndicatorColor = BlueEnd
+                        unfocusedIndicatorColor = BlueEnd,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
                     )
                 )
+
+                // Address Field
                 Row(modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 45.dp), horizontalArrangement = Arrangement.Start) {
@@ -437,41 +515,35 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
                         focusedIndicatorColor = BlueEnd,
-                        unfocusedIndicatorColor = BlueEnd
+                        unfocusedIndicatorColor = BlueEnd,
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
                     )
                 )
             }
 
             Button(
                 onClick = {
-                    // Explicitly reset current customer
-                    customerViewModel.resetCurrentCustomer()
-
                     when {
-                        fullName.isBlank() -> {
-                            // Show error for empty name
-                        }
-                        contactNumber.isBlank() -> {
-                            // Show error for empty contact
-                        }
-                        address.isBlank() -> {
-                            // Show error for empty address
+                        fullName.isBlank() || contactNumber.isBlank() || address.isBlank() -> {
+                            // Handle validation
                         }
                         else -> {
-                            // Create a new customer with no initial ID
                             val newCustomer = CustomerDetail(
-                                customerId = 0,
+                                customerId = 0,  // This will be replaced with the generated ID
                                 name = fullName.trim(),
                                 address = address.trim(),
                                 contactNumber = contactNumber.trim()
                             )
 
-                            // Ensure complete reset before inserting
-                            customerViewModel.resetNewCurrentCustomer()
-                            customerViewModel.insertCustomer(newCustomer)
-                            customerViewModel.isNewCustomer.value = true
-
-                            customerPicked()
+                            customerViewModel.insertCustomer(newCustomer) { insertedCustomer ->
+                                // Now insertedCustomer has the correct customerId from the database
+                                customerViewModel.setCurrentCustomer(insertedCustomer)
+                                isCustomerInserted = true
+                                customerViewModel.isNewCustomer.value = true
+                                println("Is New Customer: ${customerViewModel.isNewCustomer.value}")
+                                customerPicked()
+                            }
                         }
                     }
                 },
@@ -493,14 +565,15 @@ fun SelectNewCustomer(onClose: () -> Unit, customerPicked: () -> Unit) {
     }
 }
 
+
 @Composable
 fun CustomerItem(
     name: String,
     contact: String,
     address: String,
-    customerId: Long,  // Add customerId parameter
+    customerId: Long,
     isSelected: () -> Unit,
-    navController: NavController  // Add NavController
+    navController: NavController
 ) {
     val customerDetail = LocalCustomerViewModel.current
 
@@ -510,9 +583,16 @@ fun CustomerItem(
             .padding(start = 15.dp, top = 10.dp)
             .clickable {
                 isSelected()
-                customerDetail.setCurrentCustomer(CustomerDetail(name = name, address = address, contactNumber = contact))
+                customerDetail.setCurrentCustomer(
+                    CustomerDetail(
+                        customerId = customerId,
+                        name = name,
+                        address = address,
+                        contactNumber = contact
+                    )
+                )
             },
-        horizontalArrangement = Arrangement.SpaceBetween,  // Changed to SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
@@ -546,7 +626,6 @@ fun CustomerItem(
             }
         }
 
-        // Location Icon
         IconButton(
             onClick = { navController.navigate("maps/$customerId") }
         ) {
@@ -558,4 +637,3 @@ fun CustomerItem(
         }
     }
 }
-

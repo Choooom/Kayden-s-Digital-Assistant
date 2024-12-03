@@ -9,11 +9,13 @@ import com.example.kaydensdigitalassistant.data.ReceiptItem
 @Composable
 fun PrintToThermalPrinter(
     referenceNumber: String,
+    customerName: String,
     customerAddress: String,
     paymentOption: String,
     receiptItems: List<ReceiptItem>,
     totalAmount: Double,
-    pricingOption: String
+    pricingOption: String,
+    deposit: Double = 0.0
 ) {
     val context = LocalContext.current
 
@@ -23,6 +25,7 @@ fun PrintToThermalPrinter(
 
         append("<010>${CurrentDateTime()}")
 
+        append("<010>${customerName}")
         append("<010>${customerAddress}\n")
 
         append("<010>------------------------------")
@@ -43,18 +46,14 @@ fun PrintToThermalPrinter(
 
         append("<010>------------------------------")
 
-        val finalAmount = if (pricingOption != "Discounted") {
-            totalAmount
-        } else {
-            val discount = totalAmount * (1.875 / 100)
-            totalAmount - discount
-        }
-        if (pricingOption == "Discounted") {
-            append("<010>(Discounted 1.875% off)\n")
+        append("<100>Total: ${totalAmount + deposit}")
+        if(pricingOption == "Discounted"){
+            append("<100>(Discounted)")
         }
 
-        append("<100>Total: $finalAmount")
-
+        if (deposit > 0.0) {
+            append("<000>Deposit: $deposit")
+        }
         append("<010>------------------------------\n")
         append("<010>THANK YOU!\n\n")
     }

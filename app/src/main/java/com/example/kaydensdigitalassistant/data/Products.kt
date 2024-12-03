@@ -15,6 +15,6 @@ data class Products(
     val discountedPrice: Double,
     val stock: Double,
     @TypeConverters(Converters::class)
-    val productIcon: Bitmap? = null
-    //val isHalf-able: Boolean = false
+    val productIcon: Bitmap? = null,
+    val isHalfable: Boolean = false
 )

@@ -5,11 +5,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class EmployeeDetailViewModel(private val repository: EmployeeRepository) : ViewModel() {
     var name: String = ""
@@ -22,11 +24,12 @@ class EmployeeDetailViewModel(private val repository: EmployeeRepository) : View
     val allEmployees: LiveData<List<EmployeeDetail>> = repository.allEmployees.asLiveData()
 
     private val _currentEmployee = MutableStateFlow<EmployeeDetail?>(null)
-    val currentEmployee: StateFlow<EmployeeDetail?> = _currentEmployee.asStateFlow()
+    val currentEmployee = _currentEmployee.asStateFlow()
 
-    fun loginEmployee(username: String, password: String) = viewModelScope.launch {
+    suspend fun loginEmployee(username: String, password: String): Boolean {
         val employee = repository.loginEmployee(username, password)
         _currentEmployee.value = employee
+        return employee != null
     }
 
     fun insertEmployee(employee: EmployeeDetail) = viewModelScope.launch {
@@ -62,6 +65,17 @@ class EmployeeDetailViewModel(private val repository: EmployeeRepository) : View
         repository.deleteEmployee(employee)
     }
 
+    suspend fun clearCurrentEmployee() {
+        withContext(Dispatchers.IO) {
+            repository.clearEmployees()
+        }
+    }
+
+    suspend fun updateEmployeePassword(email: String, newPassword: String) {
+        repository.updateEmployeePassword(email, newPassword)
+    }
+
+
     class EmployeeDetailViewModelFactory(private val repository: EmployeeRepository) :
         ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -92,4 +106,13 @@ class EmployeeRepository(private val employeeDetailDao: EmployeeDetailDao) {
     suspend fun deleteEmployee(employee: EmployeeDetail) {
         employeeDetailDao.deleteEmployee(employee)
     }
+
+    suspend fun clearEmployees() {
+        employeeDetailDao.clearAllEmployees()
+    }
+
+    suspend fun updateEmployeePassword(email: String, newPassword: String) {
+        employeeDetailDao.updatePassword(email, newPassword)
+    }
+
 }

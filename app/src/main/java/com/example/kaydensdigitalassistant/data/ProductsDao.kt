@@ -35,4 +35,10 @@ interface ProductsDao {
 
     @Query("SELECT DISTINCT type FROM products ORDER BY type ASC")
     fun getAllProductTypes(): Flow<List<String>>
+
+    @Query("SELECT * FROM products WHERE productName = :name LIMIT 1")
+    suspend fun getProductByName(name: String): Products?
+
+    @Query("UPDATE products SET stock = stock + :quantity WHERE productName = :productName")
+    suspend fun restoreStock(productName: String, quantity: Double)
 }

@@ -48,6 +48,28 @@ interface SalesItemDao {
 """)
     fun getProductSalesCount(): Flow<List<ProductSaleCount>>
 
+    // Add these new queries
+    @Query("DELETE FROM sales_items WHERE salesId = :salesId")
+    suspend fun deleteSalesById(salesId: Long)
+
+    @Query("SELECT * FROM sales_items WHERE salesId = :salesId")
+    suspend fun getSalesItemByIdOnce(salesId: Long): SalesItem?
+
+    @Query("""
+    SELECT si.* FROM sales_items si
+    INNER JOIN customer_details cd ON si.customerId = cd.customerId
+    WHERE cd.name LIKE '%' || :searchQuery || '%'
+    OR cd.address LIKE '%' || :searchQuery || '%'
+    OR cd.contactNumber LIKE '%' || :searchQuery || '%'
+    OR si.salesId LIKE '%' || :searchQuery || '%'
+    OR si.dateDelivered LIKE '%' || :searchQuery || '%'
+    OR si.timeDelivered LIKE '%' || :searchQuery || '%'
+    OR si.paymentMethod LIKE '%' || :searchQuery || '%'
+    OR si.paymentOption LIKE '%' || :searchQuery || '%'
+    OR si.referenceNumber LIKE '%' || :searchQuery || '%'
+    OR si.orderDetails LIKE '%' || :searchQuery || '%'
+""")
+    fun searchSales(searchQuery: String): Flow<List<SalesItem>>
 }
 
 data class ProductSaleCount(

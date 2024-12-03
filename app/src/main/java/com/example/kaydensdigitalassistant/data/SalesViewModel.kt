@@ -1,7 +1,10 @@
 package com.example.kaydensdigitalassistant.data
 
 import android.app.Application
+import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.mutableStateListOf
+import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -9,13 +12,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.kaydensdigitalassistant.ExcelExporter
 import com.example.kaydensdigitalassistant.LocalSalesViewModel
 import com.example.kaydensdigitalassistant.getCurrentTimeDate
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.io.File
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -24,7 +33,7 @@ import java.util.Locale
 import java.util.TimeZone
 import kotlin.random.Random
 
-class SalesItemViewModel(private val repository: SalesItemRepository) : ViewModel() {
+class SalesItemViewModel(private val repository: SalesItemRepository, private val customerRepository: CustomerRepository, private val productRepository: ProductsRepository) : ViewModel() {
     val receiptItemState = mutableStateListOf<ReceiptItem>()
     val allSalesItems: LiveData<List<SalesItem>> = repository.allSalesItems.asLiveData()
 
@@ -36,6 +45,9 @@ class SalesItemViewModel(private val repository: SalesItemRepository) : ViewMode
 
     private val _selectedSalesItems = MutableLiveData<List<SalesItem>>()
     val selectedSalesItems: LiveData<List<SalesItem>> = _selectedSalesItems
+
+    private val _searchResults = MutableStateFlow<List<SalesItem>>(emptyList())
+    val searchResults: StateFlow<List<SalesItem>> = _searchResults.asStateFlow()
 
     fun insertSalesItem(salesItem: SalesItem) = viewModelScope.launch {
         repository.insertSalesItem(salesItem)
@@ -125,17 +137,69 @@ class SalesItemViewModel(private val repository: SalesItemRepository) : ViewMode
         return repository.getProductSalesCount()
     }
 
+    fun deleteSalesById(salesId: Long) = viewModelScope.launch {
+        repository.deleteSalesById(salesId)
+    }
 
-    class SalesItemViewModelFactory(private val repository: SalesItemRepository) :
-        ViewModelProvider.Factory {
+    fun searchSales(query: String) {
+        viewModelScope.launch {
+            repository.searchSales(query)
+                .collect { results ->
+                    _searchResults.value = results
+                }
+        }
+    }
+
+    fun exportSalesData(selectedDate: String, context: Context) {
+        viewModelScope.launch {
+            val sales = repository.getSalesByDate(selectedDate).first()
+            val customers = customerRepository.allCustomers.first()
+                .associateBy { it.customerId }
+            val products = productRepository.allProducts.first()
+
+            val exporter = ExcelExporter(context)
+            val file = exporter.exportSalesToExcel(
+                sales = sales,
+                customers = customers,
+                products = products,
+                selectedDate = selectedDate
+            )
+
+            shareExcelFile(context, file)
+        }
+    }
+
+
+    class SalesItemViewModelFactory(
+        private val repository: SalesItemRepository,
+        private val customerRepository: CustomerRepository,
+        private val productRepository: ProductsRepository
+    ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(SalesItemViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return SalesItemViewModel(repository) as T
+                return SalesItemViewModel(repository, customerRepository, productRepository) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
+
+}
+
+private fun shareExcelFile(context: Context, file: File) {
+    val uri = FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.provider",
+        file
+    )
+
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+
+    context.startActivity(Intent.createChooser(intent, "Share Sales Report"))
 }
 
 class SalesItemRepository(private val salesItemDao: SalesItemDao) {
@@ -161,4 +225,11 @@ class SalesItemRepository(private val salesItemDao: SalesItemDao) {
         return salesItemDao.getProductSalesCount()
     }
 
+    suspend fun deleteSalesById(salesId: Long) {
+        salesItemDao.deleteSalesById(salesId)
+    }
+
+    fun searchSales(query: String): Flow<List<SalesItem>> {
+        return salesItemDao.searchSales(query)
+    }
 }

@@ -42,7 +42,7 @@ fun MainScreen() {
     val isAdmin by userRoleViewModel.isAdmin.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        NavHost(navController = navController, startDestination = "salesTracking", modifier = Modifier.weight(1f)) {
+        NavHost(navController = navController, startDestination = "login", modifier = Modifier.weight(1f)) {
 
             composable("login") {
                 LogIn(
@@ -75,14 +75,20 @@ fun MainScreen() {
             composable("salesTracking") {
                 SalesTracking(navController = navController)
             }
-            composable("receiptPreview/{paymentOption}/{pricingOption}") { backStackEntry ->
+            composable(
+                "receiptPreview/{paymentOption}/{pricingOption}/{deposit}",
+                arguments = listOf(
+                    navArgument("deposit") { type = NavType.FloatType }
+                )
+            ) { backStackEntry ->
                 val paymentOption = backStackEntry.arguments?.getString("paymentOption") ?: "Cash"
                 val pricingOption = backStackEntry.arguments?.getString("pricingOption") ?: "Regular"
-                ReceiptPreview(navController = navController, paymentOption, pricingOption)
+                val deposit = backStackEntry.arguments?.getFloat("deposit")?.toDouble() ?: 0.0
+                ReceiptPreview(navController = navController, paymentOption, pricingOption, deposit)
             }
 
             composable("confirmReceipt"){
-                ConfirmPurchase(navController = navController, "","")
+                ConfirmPurchase(navController = navController, "","", "", 0.0)
             }
 
             composable(
@@ -137,6 +143,7 @@ fun MainScreen() {
             composable("resetPassword") {
                 PasswordResetScreen(navController = navController)
             }
+
 /*
             composable(
                 route = "customerLocation/{customerId}",
@@ -172,7 +179,7 @@ fun MainScreen() {
             }
         }
 
-    if (currentRoute != "login" && currentRoute != "admin_login"){
+    if (currentRoute != "login" && currentRoute != "admin_login" && currentRoute != "resetPassword"){
         BottomNavBar(navController = navController, isAdmin)
     }
     }

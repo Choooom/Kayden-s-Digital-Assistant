@@ -63,7 +63,9 @@ import com.example.kaydensdigitalassistant.data.AppDatabase
 import com.example.kaydensdigitalassistant.data.ReceiptItem
 import com.example.kaydensdigitalassistant.font_abeezee
 import com.example.kaydensdigitalassistant.kanit_bold
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Date
 import java.util.Locale
 import kotlin.random.Random
@@ -71,15 +73,18 @@ import kotlin.random.Random
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ReceiptPreview(navController: NavController, paymentOption: String, pricingOption: String){
+fun ReceiptPreview(navController: NavController, paymentOption: String, pricingOption: String, deposit: Double){
     val insets = WindowInsets.systemBars.asPaddingValues()
     val viewModel = LocalReceiptViewModel.current
     val customerDetail = LocalCustomerViewModel.current
-    val currentCustomer = customerDetail.currentCustomer.value
+    val currentCustomer = if(!customerDetail.isNewCustomer.value) customerDetail.fetchCurrentCustomer() else customerDetail.fetchCurrentNewCustomer()
+    println("Deposit: $deposit")
 
     println("Confirmed Receipt: ${viewModel.receiptItemsState}")
     var isConfirmed by remember{ mutableStateOf(false)}
     var print by remember{ mutableStateOf(false) }
+
+    val referenceNumber = remember { generateReferenceNumber() }
 
     Column(
         modifier = Modifier
@@ -112,7 +117,7 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
                 .fillMaxWidth()
                 .fillMaxHeight(0.2f)
                 .padding(bottom = 25.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
+            horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.Bottom
         ){
             Icon(
@@ -125,15 +130,6 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
                         print = true
                     },
             )
-
-            Icon(
-                painter = painterResource(id = R.drawable.tray_arrow_down),
-                contentDescription = "Download",
-                tint = Color.White,
-                modifier = Modifier
-                    .size(40.dp)
-                    .clickable { },
-            )
         }
 
         val businessDetails = buildAnnotatedString {
@@ -141,14 +137,19 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
                 append("KAYDEN\n")
             }
             withStyle(style = SpanStyle(fontSize = 15.sp, fontWeight = FontWeight.Light)) {
-                append("Employee #023578\n")
+                append("Reference No.: $referenceNumber\n")
             }
             withStyle(style = SpanStyle(fontSize = 15.sp, fontWeight = FontWeight.Light)) {
                 append(CurrentDateTime() + "\n")
             }
+
+            withStyle(style = SpanStyle(fontSize = 15.sp, fontWeight = FontWeight.Light)) {
+                append("${currentCustomer?.value?.name}\n")
+            }
+
             withStyle(style = SpanStyle(fontSize = 15.sp, fontWeight = FontWeight.Light)) {
                 if (currentCustomer != null) {
-                    append("${currentCustomer.address}, Palmera Bulacan\n")
+                    append("${currentCustomer.value.address}, Palmera Bulacan\n")
                 }
             }
             withStyle(style = SpanStyle(fontSize = 15.sp)) {
@@ -205,12 +206,18 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
             withStyle(style = SpanStyle(fontSize = 17.sp)) {
                 val price = viewModel.getTotalAmount()
                 append(
-                    price.toString() + "\n"
+                    (price + deposit).toString()  + "\n"
                 )
             }
             if(pricingOption == "Discounted"){
                 withStyle(style = SpanStyle(fontSize = 10.sp, fontWeight = FontWeight.Normal)) {
                     append("(Discounted)")
+                }
+            }
+
+            if(deposit > 0.0){
+                withStyle(style = SpanStyle(fontSize = 10.sp, fontWeight = FontWeight.Normal)) {
+                    append("\nDeposit: $deposit")
                 }
             }
         }
@@ -402,50 +409,56 @@ fun ReceiptPreview(navController: NavController, paymentOption: String, pricingO
             }
         }
 
-        val referenceNumber = generateReferenceNumber()
-
         if(print){
             if (currentCustomer != null) {
                 PrintToThermalPrinter(
                     referenceNumber = referenceNumber,
-                    customerAddress = "${currentCustomer.address}, Palmera Bulacan",
+                    customerName = currentCustomer.value.name,
+                    customerAddress = "${currentCustomer.value.address}, Palmera Bulacan",
                     paymentOption = paymentOption,
                     receiptItems = viewModel.receiptItemsState,
                     totalAmount = viewModel.getTotalAmount(),
-                    pricingOption = paymentOption
+                    pricingOption = pricingOption,
+                    deposit = deposit
                 )
             }
             print = false
         }
 
         if(isConfirmed){
-            ConfirmPurchase(navController, pricingOption, referenceNumber)
-            navController.navigate("selectCustomer")
+            ConfirmPurchase(navController, paymentOption, pricingOption, referenceNumber, deposit)
+            navController.navigateWithPopUp(
+                route = "selectCustomer",
+                popUpToRoute = "INITIALIZATION_MODE",
+                inclusive = true
+            )
             isConfirmed = false
         }
     }
 }
 
 @Composable
-fun ConfirmPurchase(navController: NavController, paymentOption: String, referenceNumber: String) {
+fun ConfirmPurchase(navController: NavController, paymentOption: String, pricingOption: String, referenceNumber: String, deposit: Double) {
     val customerDetailViewModel = LocalCustomerViewModel.current
     val receiptViewModel = LocalReceiptViewModel.current
     val productsViewModel = LocalProductsViewModel.current
-    val currentCustomer = if(!customerDetailViewModel.isNewCustomer.value) customerDetailViewModel.fetchCurrentCustomer()
-    else customerDetailViewModel.fetchNewCurrentCustomer()
+    val currentCustomer = if(!customerDetailViewModel.isNewCustomer.value) customerDetailViewModel.fetchCurrentCustomer() else customerDetailViewModel.fetchCurrentNewCustomer()
     val receiptItemsState = receiptViewModel.receiptItemsState
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Add a check to ensure we have a current customer before proceeding
     LaunchedEffect(currentCustomer) {
         println("DEBUG: Confirm Purchase - Current Customer: $currentCustomer")
-        scope.launch {
-            try {
-                val appDatabase = AppDatabase.getInstance(context)
+        try {
+            val appDatabase = AppDatabase.getInstance(context)
 
+            withContext(Dispatchers.IO) {
                 appDatabase.withTransaction {
-                    println("Attempting to process sale for Customer: $currentCustomer")
+                    val updatedCustomer = currentCustomer.value.copy(
+                        preferredOrder = receiptItemsState.map { it.name }
+                    )
+
+                    appDatabase.customerDetailDao().updateCustomer(updatedCustomer)
 
                     val salesItem = SalesItem(
                         customerId = currentCustomer.value.customerId,
@@ -454,7 +467,10 @@ fun ConfirmPurchase(navController: NavController, paymentOption: String, referen
                         totalAmount = calculateTotalAmount(receiptItemsState),
                         dateDelivered = getCurrentDate(),
                         timeDelivered = getCurrentTime(),
-                        paymentMethod = paymentOption
+                        paymentMethod = paymentOption,
+                        paymentOption = pricingOption,
+                        referenceNumber = referenceNumber,
+                        deposit = deposit
                     )
 
                     appDatabase.salesItemDao().insertSalesItem(salesItem)
@@ -466,20 +482,21 @@ fun ConfirmPurchase(navController: NavController, paymentOption: String, referen
                         )
                     }
                 }
+            }
 
+            withContext(Dispatchers.Main) {
                 receiptViewModel.receiptItemsState.clear()
-
-                // Forcefully reset customer
                 customerDetailViewModel.resetCurrentCustomer()
                 customerDetailViewModel.resetNewCurrentCustomer()
-
                 println("Sale processed, customer reset")
-
-                navController.navigate("selectCustomer")
-            } catch (e: Exception) {
-                println("Error processing sale: ${e.message}")
-                // Handle error, potentially show a user-friendly message
+                navController.navigateWithPopUp(
+                    route = "selectCustomer",
+                    popUpToRoute = "INITIALIZATION_MODE",
+                    inclusive = true
+                )
             }
+        } catch (e: Exception) {
+            println("Error processing sale: ${e.message}")
         }
     }
 }
