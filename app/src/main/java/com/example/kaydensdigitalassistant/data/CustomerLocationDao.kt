@@ -16,6 +16,9 @@ interface CustomerLocationDao {
     @Query("DELETE FROM customer_locations")
     suspend fun clearAllLocations()
 
+    @Query("SELECT * FROM customer_locations WHERE customerId = :id")
+    suspend fun getLocationById(id: Long): CustomerLocation?
+
     @Query("SELECT * FROM customer_locations WHERE customerId = :customerId")
     fun getLocationByCustomerId(customerId: Long): Flow<CustomerLocation?>
 
@@ -30,6 +33,15 @@ interface CustomerLocationDao {
 
     @Query("SELECT * FROM customer_locations WHERE customerId = :customerId")
     suspend fun getLocationByCustomerIdSync(customerId: Long): CustomerLocation?
+
+    @Query("SELECT * FROM customer_locations")
+    fun getAllCustomerLocations(): Flow<List<CustomerLocation>>
+
+    @Query("SELECT * FROM customer_locations WHERE lastModified > :timestamp AND isDeleted = 0")
+    suspend fun getLocationsModifiedSince(timestamp: Long): List<CustomerLocation>
+
+    @Query("UPDATE customer_locations SET isDeleted = 1, lastModified = :timestamp WHERE locationId = :id")
+    suspend fun markAsDeleted(id: Long, timestamp: Long = System.currentTimeMillis())
 
     @Update
     suspend fun updateLocation(location: CustomerLocation)

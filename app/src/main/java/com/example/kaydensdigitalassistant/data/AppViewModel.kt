@@ -12,6 +12,14 @@ class AppViewModel(private val repository: AppRepository) : ViewModel() {
         repository.clearAllTables()
     }
 
+    fun clearSalesTable() = viewModelScope.launch {
+        repository.clearSalesTable()
+    }
+
+    fun clearProductsTable() = viewModelScope.launch {
+        repository.clearProductsTable()
+    }
+
     class AppViewModelFactory(private val repository: AppRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(AppViewModel::class.java)) {
@@ -27,6 +35,14 @@ class AppRepository(private val dao: AppDao) {
     suspend fun clearAllTables() {
         dao.clearCustomerDetails()
         dao.clearSalesTable()
+        dao.clearProductsTable()
+    }
+
+    suspend fun clearSalesTable(){
+        dao.clearSalesTable()
+    }
+
+    suspend fun clearProductsTable(){
         dao.clearProductsTable()
     }
 }

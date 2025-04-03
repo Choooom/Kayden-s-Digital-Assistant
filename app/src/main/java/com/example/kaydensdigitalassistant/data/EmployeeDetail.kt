@@ -3,6 +3,7 @@ package com.example.kaydensdigitalassistant.data
 import android.graphics.Bitmap
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.example.kaydensdigitalassistant.SyncableEntity
 
 @Entity(tableName = "employee_details")
 data class EmployeeDetail(
@@ -14,5 +15,9 @@ data class EmployeeDetail(
     val birthdate: String,
     val password: String,
     val username: String,
-    val userProfile: Bitmap? = null
-)
+    val userProfile: Bitmap? = null,
+
+    override val lastModified: Long = System.currentTimeMillis(),
+    override val isDeleted: Boolean = false,
+    override val deviceId: String = ""
+) : SyncableEntity

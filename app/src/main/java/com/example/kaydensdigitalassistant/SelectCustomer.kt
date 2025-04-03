@@ -2,6 +2,7 @@ package com.example.kaydensdigitalassistant
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.wifi.p2p.WifiP2pDevice
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,32 +18,46 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,7 +79,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.kaydensdigitalassistant.data.AppDatabase
 import com.example.kaydensdigitalassistant.data.CustomerDetail
 import com.example.kaydensdigitalassistant.data.CustomerDetailViewModel
 import com.example.kaydensdigitalassistant.data.EmployeeDetail
@@ -76,121 +93,146 @@ import com.example.kaydensdigitalassistant.ui.theme.dirtyWhite
 import com.example.kaydensdigitalassistant.font_archivo
 import com.example.kaydensdigitalassistant.font_notosans_bold
 import com.example.kaydensdigitalassistant.font_notosans_regular
+import kotlinx.coroutines.launch
 
 @Composable
 fun SelectCustomer(navController: NavController){
     var isOldCustomer by remember { mutableStateOf(false) }
     var isNewCustomer by remember { mutableStateOf(false) }
     var isClosed by remember { mutableStateOf(true) }
+    var showSyncDialog by remember { mutableStateOf(false) }
     val receiptViewModel = LocalReceiptViewModel.current
 
-    /*
-    val employeeViewModel = LocalEmployeeViewModel.current
-    employeeViewModel.insertEmployee(EmployeeDetail(1, "BongBong", "09296726163", "romilleilaida420@gmail.com", "12/20/2003",  "123456", "BongBong"))
+    val syncViewModel = LocalSyncViewModel.current
 
-    val appViewModel = LocalAppViewModel.current
-    appViewModel.clearAllData()
+    // Observe the sync status and progress
+    val syncStatus by syncViewModel.syncStatus.observeAsState(SyncStatus.IDLE)
+    val syncProgress by syncViewModel.syncProgress.observeAsState(0)
+    val availableDevices by syncViewModel.availableDevices.observeAsState(emptyList())
+    val currentDevice by syncViewModel.currentlyConnectedDevice.observeAsState()
 
-
-        val productViewModel = LocalProductsViewModel.current
-        val context = LocalContext.current
-
-        fun getBitmap(drawableId: Int): Bitmap {
-            return BitmapFactory.decodeResource(context.resources, drawableId)
-        }
-
-        val productsList = listOf(
-            Products(productName = "Red Horse 1000 ML (Mucho)", type = "Beer", normalPrice = 640.0, discountedPrice = 628.0, stock = 100.0, productIcon = getBitmap(R.drawable.mucho)),
-            Products(productName = "Red Horse 500 ML", type = "Beer", normalPrice = 628.0, discountedPrice = 615.0, stock = 100.0, productIcon = getBitmap(R.drawable.redhorse_500)),
-            Products(productName = "Red Horse 330 ML (Stallion)", type = "Beer", normalPrice = 945.0, discountedPrice = 930.0, stock = 100.0, productIcon = getBitmap(R.drawable.stallion)),
-            Products(productName = "Pale Pilsen 1000 ML (Grande)", type = "Beer", normalPrice = 610.0, discountedPrice = 600.0, stock = 100.0, productIcon = getBitmap(R.drawable.grande)),
-            Products(productName = "Pale Pilsen 320 ML", type = "Beer", normalPrice = 880.0, discountedPrice = 865.0, stock = 100.0, productIcon = getBitmap(R.drawable.pilsen_small)),
-            Products(productName = "San Mig Light 330 ML", type = "Beer", normalPrice = 1035.0, discountedPrice = 1020.0, stock = 100.0, productIcon = getBitmap(R.drawable.sanmig_light)),
-            Products(productName = "San Mig Apple 330 ML", type = "Beer", normalPrice = 860.0, discountedPrice = 845.0, stock = 100.0, productIcon = getBitmap(R.drawable.sanmig_apple)),
-            Products(productName = "RC Original Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.rc_small)),
-            Products(productName = "RC Orange Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.orange_small)),
-            Products(productName = "RC Lemon Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.lemon_small)),
-            Products(productName = "RC Root Beer Small 240 ML", type = "Softdrink", normalPrice = 174.0, discountedPrice = 169.0, stock = 100.0, productIcon = getBitmap(R.drawable.rootbeer_small)),
-            Products(productName = "RC Mega Original 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.rc_mega)),
-            Products(productName = "RC Mega Orange 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.orange_mega)),
-            Products(productName = "RC Mega Lemon 800 ML", type = "Softdrink", normalPrice = 260.0, discountedPrice = 253.0, stock = 100.0, productIcon = getBitmap(R.drawable.lemon_mega)),
-            Products(productName = "Cobra Original (Yellow) 240 ML", type = "Energy-Drink", normalPrice = 300.0, discountedPrice = 295.0, stock = 100.0, productIcon = getBitmap(R.drawable.cobra_yellow)),
-            Products(productName = "Cobra Citrus (Green) 240 ML", type = "Energy-Drink", normalPrice = 300.0, discountedPrice = 295.0, stock = 100.0, productIcon = getBitmap(R.drawable.cobra_green))
-        )
-
-        LaunchedEffect(key1 = Unit) {
-            productsList.forEach { product ->
-                productViewModel.insertProduct(product)
-            }
-        }
-*/
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.5f)),
-        contentAlignment = Alignment.Center
-    ){
-        Column(
             modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .fillMaxHeight(0.4f)
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color.White),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ){
-            Button(
-                onClick = { isOldCustomer = true
-                    isClosed = false},
-                colors = ButtonDefaults.buttonColors(containerColor = SkyBlue),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth(0.5f)
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.5f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .fillMaxHeight(0.4f)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color.White),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "Old Customer", color = Color.Black, fontWeight = FontWeight.Normal, fontSize = 15.sp)
+                Button(
+                    onClick = {
+                        isOldCustomer = true
+                        isClosed = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = SkyBlue),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth(0.5f)
+                ) {
+                    Text(
+                        text = "Old Customer",
+                        color = Color.Black,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 15.sp
+                    )
+                }
+
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.1f)
+                )
+
+                Button(
+                    onClick = {
+                        isNewCustomer = true
+                        isClosed = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = SkyBlue),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth(0.5f)
+                ) {
+                    Text(
+                        text = "New Customer",
+                        color = Color.Black,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 15.sp
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.1f))
-
-            Button(
-                onClick = { isNewCustomer = true
-                    isClosed = false},
-                colors = ButtonDefaults.buttonColors(containerColor = SkyBlue),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth(0.5f)
+            FloatingActionButton(
+                onClick = { showSyncDialog = true },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = Color.White,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
             ) {
-                Text(text = "New Customer", color = Color.Black, fontWeight = FontWeight.Normal, fontSize = 15.sp)
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Sync with other devices"
+                )
+
+                // Show a circular indicator when syncing
+                if (syncStatus == SyncStatus.SYNCING) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .padding(4.dp),
+                        trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                }
             }
-        }
 
-        if (isOldCustomer && !isClosed) {
-            SelectOldCustomer(onClose = {
-                isClosed = true
-                isOldCustomer = false
-            }, customerPicked = {
-                isClosed = true
-                receiptViewModel.receiptItemsState.clear()
-                navController.navigate("receipt")
-            }, navController = navController)
-        }
-
-        if (isNewCustomer && !isClosed) {
-            SelectNewCustomer(onClose = {
-                isClosed = true
-                isNewCustomer = false
-            },customerPicked = {
-                isClosed = true
-                receiptViewModel.receiptItemsState.clear()
-                navController.navigateWithPopUp(
-                    route = "receipt",
-                    popUpToRoute = "INITIALIZATION_MODE",
-                    inclusive = true
+            // Sync Dialog
+            if (showSyncDialog) {
+                SyncDialog(
+                    syncViewModel = syncViewModel,
+                    syncStatus = syncStatus,
+                    syncProgress = syncProgress,
+                    availableDevices = availableDevices,
+                    currentDevice = currentDevice,
+                    onDismiss = { showSyncDialog = false }
                 )
             }
-            )
+
+            if (isOldCustomer && !isClosed) {
+                SelectOldCustomer(onClose = {
+                    isClosed = true
+                    isOldCustomer = false
+                }, customerPicked = {
+                    isClosed = true
+                    receiptViewModel.receiptItemsState.clear()
+                    navController.navigate("receipt")
+                }, navController = navController)
+            }
+
+            if (isNewCustomer && !isClosed) {
+                SelectNewCustomer(onClose = {
+                    isClosed = true
+                    isNewCustomer = false
+                }, customerPicked = {
+                    isClosed = true
+                    receiptViewModel.receiptItemsState.clear()
+                    navController.navigateWithPopUp(
+                        route = "receipt",
+                        popUpToRoute = "INITIALIZATION_MODE",
+                        inclusive = true
+                    )
+                }
+                )
+            }
         }
-    }
+
 }
 
 @Composable
@@ -633,6 +675,171 @@ fun CustomerItem(
                 imageVector = Icons.Default.LocationOn,
                 contentDescription = "View Location",
                 tint = BlueEnd
+            )
+        }
+    }
+}
+
+@Composable
+fun SyncDialog(
+    syncViewModel: SyncViewModel,
+    syncStatus: SyncStatus,
+    syncProgress: Int,
+    availableDevices: List<WifiP2pDevice>,
+    currentDevice: WifiP2pDevice?,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Sync with other devices") },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Last sync info
+                Text(
+                    text = "Last sync: ${syncViewModel.getFormattedLastSyncTime()}",
+                    style = MaterialTheme.typography.bodySmall
+                )
+
+                // Current status
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Status: ${syncStatus.name.replace('_', ' ')}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+
+                    if (syncStatus == SyncStatus.SYNCING) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
+                }
+
+                // Progress bar for syncing
+                if (syncStatus == SyncStatus.SYNCING) {
+                    Column {
+                        Text(
+                            text = "Progress: $syncProgress%",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        LinearProgressIndicator(
+                            progress = { syncProgress / 100f },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
+                // Connected device
+                if (currentDevice != null) {
+                    Text(
+                        text = "Connected to: ${currentDevice.deviceName}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                // Available devices list
+                if (availableDevices.isNotEmpty()) {
+                    Text(
+                        text = "Available devices:",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                    ) {
+                        items(availableDevices) { device ->
+                            DeviceItem(
+                                device = device,
+                                isConnected = device.deviceAddress == currentDevice?.deviceAddress,
+                                onClick = { syncViewModel.connectToDevice(device) }
+                            )
+                        }
+                    }
+                } else if (syncStatus == SyncStatus.DISCOVERING) {
+                    Text(
+                        text = "Searching for devices...",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                } else {
+                    Text(
+                        text = "No devices found. Tap 'Discover Devices' to search.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Button(
+                    onClick = { syncViewModel.discoverDevices() },
+                    enabled = syncStatus != SyncStatus.SYNCING
+                ) {
+                    Text(if (syncStatus == SyncStatus.DISCOVERING) "Restart Discovery" else "Discover Devices")
+                }
+
+                Button(
+                    onClick = { syncViewModel.forceSyncNow() },
+                    enabled = syncStatus == SyncStatus.CONNECTED && currentDevice != null
+                ) {
+                    Text("Sync Now")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}
+
+@Composable
+fun DeviceItem(
+    device: WifiP2pDevice,
+    isConnected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !isConnected, onClick = onClick)
+            .padding(vertical = 8.dp, horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column {
+            Text(
+                text = device.deviceName,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (isConnected) FontWeight.Bold else FontWeight.Normal
+            )
+
+            Text(
+                text = device.deviceAddress,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        if (isConnected) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = "Connected",
+                tint = MaterialTheme.colorScheme.primary
             )
         }
     }

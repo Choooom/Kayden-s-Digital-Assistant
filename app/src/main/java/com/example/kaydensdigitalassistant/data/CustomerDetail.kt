@@ -3,6 +3,7 @@ package com.example.kaydensdigitalassistant.data
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
+import com.example.kaydensdigitalassistant.SyncableEntity
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -15,5 +16,9 @@ data class CustomerDetail(
     val contactNumber: String,
     @TypeConverters(Converters::class)
     val preferredOrder: List<String> = emptyList(),
-    val registrationDate: String = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM-dd-yyyy"))
-)
+    val registrationDate: String = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM-dd-yyyy")),
+
+    override val lastModified: Long = System.currentTimeMillis(),
+    override val isDeleted: Boolean = false,
+    override val deviceId: String = ""
+) : SyncableEntity

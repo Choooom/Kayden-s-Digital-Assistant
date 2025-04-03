@@ -5,6 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
+import com.example.kaydensdigitalassistant.SyncableEntity
 
 @Entity(tableName = "sales_items")
 data class SalesItem(
@@ -20,5 +21,9 @@ data class SalesItem(
     val paymentMethod: String,
     val paymentOption: String,
     val deposit: Double = 0.0,
-    val referenceNumber: String
-)
+    val referenceNumber: String,
+
+    override val lastModified: Long = System.currentTimeMillis(),
+    override val isDeleted: Boolean = false,
+    override val deviceId: String = ""
+) : SyncableEntity

@@ -1,0 +1,4 @@
+package com.example.kaydensdigitalassistant.data
+
+interface AppDao {
+}

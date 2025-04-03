@@ -1,0 +1,50 @@
+package com.example.kaydensdigitalassistant
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+
+@Composable
+fun CustomerLocationScreen(
+    navController: NavController,
+    customerId: Long
+) {
+
+    val viewModel = LocalLocationViewModel.current
+    Column(modifier = Modifier.fillMaxSize()) {
+        MapScreen(customerId)
+        IconButton(
+                onClick = { navController.navigateUp() },
+        modifier = Modifier.padding(16.dp)
+        ) {
+        Icon(Icons.Default.ArrowBack, "Back")
+    }
+
+        // Optional: Display selected coordinates
+        viewModel.selectedLocation.collectAsState().value?.let { (lat, lon) ->
+            Text(
+                text = "Selected Location: $lat, $lon",
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+
+        // Add a button to save location
+        Button(
+            onClick = { /* Save location to database */ },
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text("Save Location")
+        }
+    }
+}

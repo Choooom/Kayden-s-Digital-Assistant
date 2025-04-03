@@ -1,0 +1,14 @@
+package com.example.kaydensdigitalassistant.data
+
+import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+class UserRoleViewModel : ViewModel() {
+    private val _isAdmin = MutableStateFlow(false)
+    val isAdmin = _isAdmin.asStateFlow()
+
+    fun setAdminStatus(isAdmin: Boolean) {
+        _isAdmin.value = isAdmin
+    }
+}

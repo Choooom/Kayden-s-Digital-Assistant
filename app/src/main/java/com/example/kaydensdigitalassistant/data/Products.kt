@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
+import com.example.kaydensdigitalassistant.SyncableEntity
 
 @Entity(tableName = "products")
 data class Products(
@@ -16,5 +17,10 @@ data class Products(
     val stock: Double,
     @TypeConverters(Converters::class)
     val productIcon: Bitmap? = null,
-    val isHalfable: Boolean = false
-)
+    val isHalfable: Boolean = false,
+
+    override val lastModified: Long = System.currentTimeMillis(),
+    override val isDeleted: Boolean = false,
+    override val deviceId: String = ""
+) : SyncableEntity
+

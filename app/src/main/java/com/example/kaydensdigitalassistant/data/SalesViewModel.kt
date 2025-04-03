@@ -169,6 +169,417 @@ class SalesItemViewModel(private val repository: SalesItemRepository, private va
         }
     }
 
+    // Add these functions to your SalesItemViewModel class
+
+    fun getWeeklySales(): Flow<Pair<Double, Double>> = flow {
+        val calendar = java.util.Calendar.getInstance()
+        val dateFormat = SimpleDateFormat("MM-dd-yyyy", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Manila")
+        }
+
+        // Current week start and end
+        val currentWeekStart = calendar.clone() as java.util.Calendar
+        currentWeekStart.set(java.util.Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
+        val currentWeekEnd = calendar.clone() as java.util.Calendar
+        currentWeekEnd.set(java.util.Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek + 6)
+
+        // Previous week start and end
+        val prevWeekStart = currentWeekStart.clone() as java.util.Calendar
+        prevWeekStart.add(java.util.Calendar.WEEK_OF_YEAR, -1)
+        val prevWeekEnd = currentWeekEnd.clone() as java.util.Calendar
+        prevWeekEnd.add(java.util.Calendar.WEEK_OF_YEAR, -1)
+
+        // Get sales for all days in both weeks and sum them
+        var currentWeekSales = 0.0
+        var prevWeekSales = 0.0
+
+        val allSales = repository.allSalesItems.first()
+
+        // Calculate current week sales
+        calendar.timeInMillis = currentWeekStart.timeInMillis
+        while (calendar.timeInMillis <= currentWeekEnd.timeInMillis) {
+            val dateStr = dateFormat.format(calendar.time)
+            val daySales = allSales
+                .filter { it.dateDelivered == dateStr }
+                .sumOf { it.totalAmount }
+            currentWeekSales += daySales
+            calendar.add(java.util.Calendar.DAY_OF_MONTH, 1)
+        }
+
+        // Calculate previous week sales
+        calendar.timeInMillis = prevWeekStart.timeInMillis
+        while (calendar.timeInMillis <= prevWeekEnd.timeInMillis) {
+            val dateStr = dateFormat.format(calendar.time)
+            val daySales = allSales
+                .filter { it.dateDelivered == dateStr }
+                .sumOf { it.totalAmount }
+            prevWeekSales += daySales
+            calendar.add(java.util.Calendar.DAY_OF_MONTH, 1)
+        }
+
+        emit(Pair(currentWeekSales, prevWeekSales))
+    }
+
+    fun getMonthlySales(): Flow<Pair<Double, Double>> = flow {
+        val calendar = java.util.Calendar.getInstance()
+        val dateFormat = SimpleDateFormat("MM-dd-yyyy", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Manila")
+        }
+
+        // Current month
+        val currentMonth = calendar.get(java.util.Calendar.MONTH)
+        val currentYear = calendar.get(java.util.Calendar.YEAR)
+
+        // Previous month
+        val prevCalendar = calendar.clone() as java.util.Calendar
+        prevCalendar.add(java.util.Calendar.MONTH, -1)
+        val prevMonth = prevCalendar.get(java.util.Calendar.MONTH)
+        val prevYear = prevCalendar.get(java.util.Calendar.YEAR)
+
+        val allSales = repository.allSalesItems.first()
+
+        // Calculate current month sales
+        val currentMonthSales = allSales
+            .filter {
+                try {
+                    val date = dateFormat.parse(it.dateDelivered)
+                    calendar.time = date
+                    calendar.get(java.util.Calendar.MONTH) == currentMonth &&
+                            calendar.get(java.util.Calendar.YEAR) == currentYear
+                } catch (e: Exception) {
+                    false
+                }
+            }
+            .sumOf { it.totalAmount }
+
+        // Calculate previous month sales
+        val prevMonthSales = allSales
+            .filter {
+                try {
+                    val date = dateFormat.parse(it.dateDelivered)
+                    calendar.time = date
+                    calendar.get(java.util.Calendar.MONTH) == prevMonth &&
+                            calendar.get(java.util.Calendar.YEAR) == prevYear
+                } catch (e: Exception) {
+                    false
+                }
+            }
+            .sumOf { it.totalAmount }
+
+        emit(Pair(currentMonthSales, prevMonthSales))
+    }
+
+    fun getWeeklyProfit(): Flow<List<Pair<String, Double>>> = flow {
+        val calendar = java.util.Calendar.getInstance()
+        val dateFormat = SimpleDateFormat("MM-dd-yyyy", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Manila")
+        }
+
+        val weekFormat = SimpleDateFormat("'Week' w", Locale.getDefault())
+        val profitMargin = 0.2 // 20% profit margin
+
+        // Get last 4 weeks data
+        val weeksData = mutableListOf<Pair<String, Double>>()
+
+        // Start from current week
+        val currentWeek = calendar.get(java.util.Calendar.WEEK_OF_YEAR)
+        val currentYear = calendar.get(java.util.Calendar.YEAR)
+
+        // Get all sales
+        val allSales = repository.allSalesItems.first()
+
+        // Last 4 weeks
+        for (weekOffset in 0 downTo -3) {
+            val weekCalendar = calendar.clone() as java.util.Calendar
+            weekCalendar.add(java.util.Calendar.WEEK_OF_YEAR, weekOffset)
+
+            val weekOfYear = weekCalendar.get(java.util.Calendar.WEEK_OF_YEAR)
+            val year = weekCalendar.get(java.util.Calendar.YEAR)
+
+            // Calculate week start and end
+            val weekStart = weekCalendar.clone() as java.util.Calendar
+            weekStart.set(java.util.Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
+            val weekEnd = weekCalendar.clone() as java.util.Calendar
+            weekEnd.set(java.util.Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek + 6)
+
+            // Format week label
+            val weekLabel = "Week ${weekOfYear}"
+
+            // Calculate sales for the week
+            var weekSales = 0.0
+            val tmpCalendar = weekStart.clone() as java.util.Calendar
+
+            while (tmpCalendar.timeInMillis <= weekEnd.timeInMillis) {
+                val dateStr = dateFormat.format(tmpCalendar.time)
+                val daySales = allSales
+                    .filter { it.dateDelivered == dateStr }
+                    .sumOf { it.totalAmount }
+                weekSales += daySales
+                tmpCalendar.add(java.util.Calendar.DAY_OF_MONTH, 1)
+            }
+
+            // Calculate profit
+            val weekProfit = weekSales * profitMargin
+            weeksData.add(Pair(weekLabel, weekProfit))
+        }
+
+        emit(weeksData.reversed()) // Return in chronological order
+    }
+
+    fun getMonthlyProfit(): Flow<List<Pair<String, Double>>> = flow {
+        val calendar = java.util.Calendar.getInstance()
+        val dateFormat = SimpleDateFormat("MM-dd-yyyy", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Manila")
+        }
+        val monthFormat = SimpleDateFormat("MMM", Locale.getDefault())
+        val profitMargin = 0.2 // 20% profit margin
+
+        // Get last 6 months data
+        val monthsData = mutableListOf<Pair<String, Double>>()
+
+        // Get all sales
+        val allSales = repository.allSalesItems.first()
+
+        // Last 6 months
+        for (monthOffset in 0 downTo -5) {
+            val monthCalendar = calendar.clone() as java.util.Calendar
+            monthCalendar.add(java.util.Calendar.MONTH, monthOffset)
+
+            val month = monthCalendar.get(java.util.Calendar.MONTH)
+            val year = monthCalendar.get(java.util.Calendar.YEAR)
+
+            // Format month label
+            val monthLabel = monthFormat.format(monthCalendar.time)
+
+            // Calculate sales for the month
+            val monthSales = allSales
+                .filter {
+                    try {
+                        val date = dateFormat.parse(it.dateDelivered)
+                        val saleCal = java.util.Calendar.getInstance()
+                        saleCal.time = date
+                        saleCal.get(java.util.Calendar.MONTH) == month &&
+                                saleCal.get(java.util.Calendar.YEAR) == year
+                    } catch (e: Exception) {
+                        false
+                    }
+                }
+                .sumOf { it.totalAmount }
+
+            // Calculate profit
+            val monthProfit = monthSales * profitMargin
+            monthsData.add(Pair(monthLabel, monthProfit))
+        }
+
+        emit(monthsData.reversed()) // Return in chronological order
+    }
+
+    fun getWeeklySalesCount(): Flow<List<Pair<String, Int>>> = flow {
+        val calendar = java.util.Calendar.getInstance()
+        val dateFormat = SimpleDateFormat("MM-dd-yyyy", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Manila")
+        }
+
+        // Get last 8 weeks data
+        val weeksData = mutableListOf<Pair<String, Int>>()
+
+        // Get all sales
+        val allSales = repository.allSalesItems.first()
+
+        // Last 8 weeks
+        for (weekOffset in 0 downTo -7) {
+            val weekCalendar = calendar.clone() as java.util.Calendar
+            weekCalendar.add(java.util.Calendar.WEEK_OF_YEAR, weekOffset)
+
+            val weekOfYear = weekCalendar.get(java.util.Calendar.WEEK_OF_YEAR)
+
+            // Calculate week start and end
+            val weekStart = weekCalendar.clone() as java.util.Calendar
+            weekStart.set(java.util.Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
+            val weekEnd = weekCalendar.clone() as java.util.Calendar
+            weekEnd.set(java.util.Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek + 6)
+
+            // Format week label
+            val weekLabel = "Week ${weekOfYear}"
+
+            // Count sales for the week
+            var weekSalesCount = 0
+            val tmpCalendar = weekStart.clone() as java.util.Calendar
+
+            while (tmpCalendar.timeInMillis <= weekEnd.timeInMillis) {
+                val dateStr = dateFormat.format(tmpCalendar.time)
+                val daySalesCount = allSales.count { it.dateDelivered == dateStr }
+                weekSalesCount += daySalesCount
+                tmpCalendar.add(java.util.Calendar.DAY_OF_MONTH, 1)
+            }
+
+            weeksData.add(Pair(weekLabel, weekSalesCount))
+        }
+
+        emit(weeksData.reversed()) // Return in chronological order
+    }
+
+    fun getMonthlySalesCount(): Flow<List<Pair<String, Int>>> = flow {
+        val calendar = java.util.Calendar.getInstance()
+        val dateFormat = SimpleDateFormat("MM-dd-yyyy", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Manila")
+        }
+        val monthFormat = SimpleDateFormat("MMM", Locale.getDefault())
+
+        // Get last 6 months data
+        val monthsData = mutableListOf<Pair<String, Int>>()
+
+        // Get all sales
+        val allSales = repository.allSalesItems.first()
+
+        // Last 6 months
+        for (monthOffset in 0 downTo -5) {
+            val monthCalendar = calendar.clone() as java.util.Calendar
+            monthCalendar.add(java.util.Calendar.MONTH, monthOffset)
+
+            val month = monthCalendar.get(java.util.Calendar.MONTH)
+            val year = monthCalendar.get(java.util.Calendar.YEAR)
+
+            // Format month label
+            val monthLabel = monthFormat.format(monthCalendar.time)
+
+            // Count sales for the month
+            val monthSalesCount = allSales
+                .count {
+                    try {
+                        val date = dateFormat.parse(it.dateDelivered)
+                        val saleCal = java.util.Calendar.getInstance()
+                        saleCal.time = date
+                        saleCal.get(java.util.Calendar.MONTH) == month &&
+                                saleCal.get(java.util.Calendar.YEAR) == year
+                    } catch (e: Exception) {
+                        false
+                    }
+                }
+
+            monthsData.add(Pair(monthLabel, monthSalesCount))
+        }
+
+        emit(monthsData.reversed()) // Return in chronological order
+    }
+
+    fun getWeeklyProductSales(): Flow<List<ProductSaleCount>> = flow {
+        val calendar = java.util.Calendar.getInstance()
+        val dateFormat = SimpleDateFormat("MM-dd-yyyy", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Manila")
+        }
+
+        // Calculate current week start and end
+        val weekStart = calendar.clone() as java.util.Calendar
+        weekStart.set(java.util.Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek)
+        val weekEnd = calendar.clone() as java.util.Calendar
+        weekEnd.set(java.util.Calendar.DAY_OF_WEEK, calendar.firstDayOfWeek + 6)
+
+        // Get sales for current week
+        val weekSalesDates = mutableListOf<String>()
+        val tmpCalendar = weekStart.clone() as java.util.Calendar
+
+        while (tmpCalendar.timeInMillis <= weekEnd.timeInMillis) {
+            weekSalesDates.add(dateFormat.format(tmpCalendar.time))
+            tmpCalendar.add(java.util.Calendar.DAY_OF_MONTH, 1)
+        }
+
+        // Get sales items for these dates
+        val allSales = repository.allSalesItems.first()
+        val weekSales = allSales.filter { it.dateDelivered in weekSalesDates }
+
+        // Get all products
+        val products = productRepository.allProducts.first()
+
+        // Calculate product sales for the week
+        val productSales = products.map { product ->
+            var totalSales = 0.0
+
+            // For each sale, check if product is in order details and calculate sales
+            weekSales.forEach { sale ->
+                if (sale.orderDetails.toString().contains(product.productName)) {
+                    // Parse order details to extract product quantities and amounts
+                    // This is simplified and assumes orderDetails can be parsed correctly
+                    try {
+                        // Extract quantity and amount for this product from orderDetails
+                        // This is a simplified approach and might need adjustment based on your actual orderDetails format
+                        val productPattern = "\"productName\":\"${product.productName}\".*?\"quantity\":(\\d+).*?\"amount\":(\\d+\\.?\\d*)".toRegex()
+                        val matchResult = productPattern.find(sale.orderDetails.toString())
+
+                        if (matchResult != null && matchResult.groupValues.size >= 3) {
+                            val quantity = matchResult.groupValues[1].toIntOrNull() ?: 0
+                            val amount = matchResult.groupValues[2].toDoubleOrNull() ?: 0.0
+                            totalSales += quantity * amount
+                        }
+                    } catch (e: Exception) {
+                        // Handle parsing exceptions
+                    }
+                }
+            }
+
+            ProductSaleCount(product.productName, totalSales)
+        }.filter { it.totalSales > 0 } // Only include products with sales
+
+        emit(productSales.sortedByDescending { it.totalSales })
+    }
+
+    fun getMonthlyProductSales(): Flow<List<ProductSaleCount>> = flow {
+        val calendar = java.util.Calendar.getInstance()
+        val dateFormat = SimpleDateFormat("MM-dd-yyyy", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Manila")
+        }
+
+        // Calculate current month period
+        val currentMonth = calendar.get(java.util.Calendar.MONTH)
+        val currentYear = calendar.get(java.util.Calendar.YEAR)
+
+        // Get all sales
+        val allSales = repository.allSalesItems.first()
+
+        // Filter sales for current month
+        val monthSales = allSales.filter {
+            try {
+                val date = dateFormat.parse(it.dateDelivered)
+                val saleCal = java.util.Calendar.getInstance()
+                saleCal.time = date
+                saleCal.get(java.util.Calendar.MONTH) == currentMonth &&
+                        saleCal.get(java.util.Calendar.YEAR) == currentYear
+            } catch (e: Exception) {
+                false
+            }
+        }
+
+        // Get all products
+        val products = productRepository.allProducts.first()
+
+        // Calculate product sales for the month
+        val productSales = products.map { product ->
+            var totalSales = 0.0
+
+            // For each sale, check if product is in order details and calculate sales
+            monthSales.forEach { sale ->
+                if (sale.orderDetails.toString().contains(product.productName)) {
+                    try {
+                        // Extract quantity and amount for this product from orderDetails
+                        val productPattern = "\"productName\":\"${product.productName}\".*?\"quantity\":(\\d+).*?\"amount\":(\\d+\\.?\\d*)".toRegex()
+                        val matchResult = productPattern.find(sale.orderDetails.toString())
+
+                        if (matchResult != null && matchResult.groupValues.size >= 3) {
+                            val quantity = matchResult.groupValues[1].toIntOrNull() ?: 0
+                            val amount = matchResult.groupValues[2].toDoubleOrNull() ?: 0.0
+                            totalSales += quantity * amount
+                        }
+                    } catch (e: Exception) {
+                        // Handle parsing exceptions
+                    }
+                }
+            }
+
+            ProductSaleCount(product.productName, totalSales)
+        }.filter { it.totalSales > 0 } // Only include products with sales
+
+        emit(productSales.sortedByDescending { it.totalSales })
+    }
 
     class SalesItemViewModelFactory(
         private val repository: SalesItemRepository,

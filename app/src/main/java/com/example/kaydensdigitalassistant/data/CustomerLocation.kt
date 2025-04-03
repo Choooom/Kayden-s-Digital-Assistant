@@ -3,6 +3,7 @@ package com.example.kaydensdigitalassistant.data
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import com.example.kaydensdigitalassistant.SyncableEntity
 
 @Entity(
     tableName = "customer_locations",
@@ -19,5 +20,9 @@ data class CustomerLocation(
     val locationId: Long = 0L,
     val customerId: Long,
     val latitude: Double,
-    val longitude: Double
-)
+    val longitude: Double,
+
+    override val lastModified: Long = System.currentTimeMillis(),
+    override val isDeleted: Boolean = false,
+    override val deviceId: String = ""
+) : SyncableEntity

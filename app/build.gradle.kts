@@ -6,6 +6,15 @@ plugins {
     alias(libs.plugins.google.gms.google.services)
 }
 
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.jetbrains.kotlinx" && requested.name == "kotlinx-metadata-jvm") {
+            useVersion(libs.versions.kotlinx.metadata.jvm.get())
+        }
+    }
+}
+
+
 android {
     namespace = "com.example.kaydensdigitalassistant"
     compileSdk = 34
@@ -49,6 +58,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.kotlinx.metadata.jvm)
 
     implementation(libs.apache.poi)
     implementation(libs.apache.poi.ooxml)
@@ -80,9 +90,11 @@ dependencies {
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.firebase.auth)
     implementation(libs.androidx.runtime.android)
+    implementation(libs.androidx.room.external.antlr)
     kapt(libs.androidx.room.compiler)
 
     implementation(libs.gson)
+    implementation(libs.coroutines.core)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

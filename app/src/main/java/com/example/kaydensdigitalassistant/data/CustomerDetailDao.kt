@@ -37,4 +37,9 @@ interface CustomerDetailDao {
     @Delete
     suspend fun deleteCustomer(customer: CustomerDetail)
 
+    @Query("SELECT * FROM customer_details WHERE lastModified > :timestamp AND isDeleted = 0")
+    suspend fun getCustomersModifiedSince(timestamp: Long): List<CustomerDetail>
+
+    @Query("UPDATE customer_details SET isDeleted = 1, lastModified = :timestamp WHERE customerId = :id")
+    suspend fun markAsDeleted(id: Long, timestamp: Long = System.currentTimeMillis())
 }

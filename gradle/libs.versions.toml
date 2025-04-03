@@ -12,19 +12,19 @@ composeBom = "2024.04.01"
 navigationCompose = "2.8.2"
 navigation = "2.8.2"
 material-icons = "1.1.0"
-roomKtx = "2.6.1"
-material3Version = "1.3.0"
+roomKtx = "2.7.0-rc03"
+material3Version = "1.3.1"
 foundationDesktop = "1.7.0"
 appcompat = "1.7.0"
 activity = "1.7.2"
 lifecycle = "2.6.2"
-room = "2.6.1"
+room = "2.7.0-rc03"
 gson = "2.10"
 adapters = "3.2.0-alpha11"
 uiDesktop = "1.4.3"
 runtimeLivedata = "1.7.5"
 googleGmsGoogleServices = "4.4.2"
-firebaseAuth = "23.1.0"
+firebaseAuth = "23.2.0"
 osmdroid = "6.1.16"
 osmbonuspack = "6.9.0"
 vico = "1.13.1"
@@ -32,6 +32,9 @@ mail = "1.6.7"
 apache-poi = "5.2.3"
 apache-poi-ooxml-lite = "5.2.3"
 runtimeAndroid = "1.7.8"
+coroutines = "1.6.1"
+roomExternalAntlr = "2.7.0-rc03"
+kotlinx-metadata-jvm = "0.6.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -81,6 +84,9 @@ apache-poi = { group = "org.apache.poi", name = "poi", version.ref = "apache-poi
 apache-poi-ooxml = { group = "org.apache.poi", name = "poi-ooxml", version.ref = "apache-poi" }
 apache-poi-ooxml-lite = { group = "org.apache.poi", name = "poi-ooxml-lite", version.ref = "apache-poi-ooxml-lite" }
 androidx-runtime-android = { group = "androidx.compose.runtime", name = "runtime-android", version.ref = "runtimeAndroid" }
+coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+androidx-room-external-antlr = { group = "androidx.room", name = "room-external-antlr", version.ref = "roomExternalAntlr" }
+kotlinx-metadata-jvm = { group = "org.jetbrains.kotlinx", name = "kotlinx-metadata-jvm", version.ref = "kotlinx-metadata-jvm" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
