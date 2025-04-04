@@ -68,8 +68,7 @@ class MainActivity: ComponentActivity() {
 
         setContent {
             KaydensDigitalAssistantTheme {
-                SyncProvider {
-                    UserRoleProvider {
+                UserRoleProvider {
                         LocationProvider {
                             EmployeeDetailProvider {
                                 AppProvider {
@@ -85,7 +84,6 @@ class MainActivity: ComponentActivity() {
                                 }
                             }
                         }
-                    }
                 }
             }
         }

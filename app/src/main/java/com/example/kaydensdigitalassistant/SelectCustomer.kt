@@ -1,7 +1,5 @@
 package com.example.kaydensdigitalassistant
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.wifi.p2p.WifiP2pDevice
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
@@ -100,16 +98,7 @@ fun SelectCustomer(navController: NavController){
     var isOldCustomer by remember { mutableStateOf(false) }
     var isNewCustomer by remember { mutableStateOf(false) }
     var isClosed by remember { mutableStateOf(true) }
-    var showSyncDialog by remember { mutableStateOf(false) }
     val receiptViewModel = LocalReceiptViewModel.current
-
-    val syncViewModel = LocalSyncViewModel.current
-
-    // Observe the sync status and progress
-    val syncStatus by syncViewModel.syncStatus.observeAsState(SyncStatus.IDLE)
-    val syncProgress by syncViewModel.syncProgress.observeAsState(0)
-    val availableDevices by syncViewModel.availableDevices.observeAsState(emptyList())
-    val currentDevice by syncViewModel.currentlyConnectedDevice.observeAsState()
 
     Box(
             modifier = Modifier
@@ -165,44 +154,6 @@ fun SelectCustomer(navController: NavController){
                         fontSize = 15.sp
                     )
                 }
-            }
-
-            FloatingActionButton(
-                onClick = { showSyncDialog = true },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "Sync with other devices"
-                )
-
-                // Show a circular indicator when syncing
-                if (syncStatus == SyncStatus.SYNCING) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .padding(4.dp),
-                        trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
-                }
-            }
-
-            // Sync Dialog
-            if (showSyncDialog) {
-                SyncDialog(
-                    syncViewModel = syncViewModel,
-                    syncStatus = syncStatus,
-                    syncProgress = syncProgress,
-                    availableDevices = availableDevices,
-                    currentDevice = currentDevice,
-                    onDismiss = { showSyncDialog = false }
-                )
             }
 
             if (isOldCustomer && !isClosed) {
@@ -675,171 +626,6 @@ fun CustomerItem(
                 imageVector = Icons.Default.LocationOn,
                 contentDescription = "View Location",
                 tint = BlueEnd
-            )
-        }
-    }
-}
-
-@Composable
-fun SyncDialog(
-    syncViewModel: SyncViewModel,
-    syncStatus: SyncStatus,
-    syncProgress: Int,
-    availableDevices: List<WifiP2pDevice>,
-    currentDevice: WifiP2pDevice?,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Sync with other devices") },
-        text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                // Last sync info
-                Text(
-                    text = "Last sync: ${syncViewModel.getFormattedLastSyncTime()}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-
-                // Current status
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "Status: ${syncStatus.name.replace('_', ' ')}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-
-                    if (syncStatus == SyncStatus.SYNCING) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp
-                        )
-                    }
-                }
-
-                // Progress bar for syncing
-                if (syncStatus == SyncStatus.SYNCING) {
-                    Column {
-                        Text(
-                            text = "Progress: $syncProgress%",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        LinearProgressIndicator(
-                            progress = { syncProgress / 100f },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-
-                // Connected device
-                if (currentDevice != null) {
-                    Text(
-                        text = "Connected to: ${currentDevice.deviceName}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-
-                // Available devices list
-                if (availableDevices.isNotEmpty()) {
-                    Text(
-                        text = "Available devices:",
-                        style = MaterialTheme.typography.titleSmall
-                    )
-
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(120.dp)
-                    ) {
-                        items(availableDevices) { device ->
-                            DeviceItem(
-                                device = device,
-                                isConnected = device.deviceAddress == currentDevice?.deviceAddress,
-                                onClick = { syncViewModel.connectToDevice(device) }
-                            )
-                        }
-                    }
-                } else if (syncStatus == SyncStatus.DISCOVERING) {
-                    Text(
-                        text = "Searching for devices...",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                } else {
-                    Text(
-                        text = "No devices found. Tap 'Discover Devices' to search.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Button(
-                    onClick = { syncViewModel.discoverDevices() },
-                    enabled = syncStatus != SyncStatus.SYNCING
-                ) {
-                    Text(if (syncStatus == SyncStatus.DISCOVERING) "Restart Discovery" else "Discover Devices")
-                }
-
-                Button(
-                    onClick = { syncViewModel.forceSyncNow() },
-                    enabled = syncStatus == SyncStatus.CONNECTED && currentDevice != null
-                ) {
-                    Text("Sync Now")
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
-            }
-        }
-    )
-}
-
-@Composable
-fun DeviceItem(
-    device: WifiP2pDevice,
-    isConnected: Boolean,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = !isConnected, onClick = onClick)
-            .padding(vertical = 8.dp, horizontal = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column {
-            Text(
-                text = device.deviceName,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = if (isConnected) FontWeight.Bold else FontWeight.Normal
-            )
-
-            Text(
-                text = device.deviceAddress,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        if (isConnected) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = "Connected",
-                tint = MaterialTheme.colorScheme.primary
             )
         }
     }

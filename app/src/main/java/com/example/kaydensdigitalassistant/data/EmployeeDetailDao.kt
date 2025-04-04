@@ -34,10 +34,4 @@ interface EmployeeDetailDao {
 
     @Query("SELECT * FROM employee_details WHERE employeeId = :id")
     suspend fun getEmployeeById(id: Long): EmployeeDetail?
-
-    @Query("SELECT * FROM employee_details WHERE lastModified > :timestamp AND isDeleted = 0")
-    suspend fun getEmployeesModifiedSince(timestamp: Long): List<EmployeeDetail>
-
-    @Query("UPDATE employee_details SET isDeleted = 1, lastModified = :timestamp WHERE employeeId = :id")
-    suspend fun markAsDeleted(id: Long, timestamp: Long = System.currentTimeMillis())
 }

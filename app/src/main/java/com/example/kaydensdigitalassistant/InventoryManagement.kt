@@ -1,5 +1,13 @@
 package com.example.kaydensdigitalassistant
 
+import android.app.Activity
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.provider.MediaStore
+import android.provider.MediaStore.Images.Media.getBitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,9 +30,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
@@ -34,6 +44,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,7 +69,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -79,6 +92,7 @@ import com.example.kaydensdigitalassistant.font_abeezee
 import com.example.kaydensdigitalassistant.font_archivo_bold
 import com.example.kaydensdigitalassistant.font_notosans_bold
 import com.example.kaydensdigitalassistant.kanit_bold
+import java.io.ByteArrayOutputStream
 
 @Composable
 fun Inventory(navController: NavController) {
@@ -89,122 +103,155 @@ fun Inventory(navController: NavController) {
     var itemType by remember { mutableStateOf("All") }
     var searchQuery by remember { mutableStateOf("") }
     var isTypeMenuExpanded by remember { mutableStateOf(false) }
+    var showAddProductDialog by remember { mutableStateOf(false) }
 
     val productTypes by productsViewModel.productTypes.collectAsState()
+
+    val userRoleViewModel = LocalUserRoleViewModel.current
+    val isAdmin by userRoleViewModel.isAdmin.collectAsState()
 
     val filteredProducts = allProducts.filter {
         (itemType == "All" || it.type == itemType) &&
                 (searchQuery.isEmpty() || it.productName.contains(searchQuery, ignoreCase = true))
     }
 
-    //---------
-
-    //---------
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = insets.calculateTopPadding())
-            .background(Brush.horizontalGradient(colors = listOf(BlueStart, BlueEnd))),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(Brush.horizontalGradient(colors = listOf(BlueStart, BlueEnd)))
     ) {
-        TopBar(navController = navController, "INVENTORY")
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(0.98f)
-                .height(70.dp)
-                .padding(top = 20.dp)
-                .clip(RoundedCornerShape(5.dp))
-                .background(Color.White),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "All Items >",
-                color = Color.Gray,
-                fontFamily = font_abeezee,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
-                modifier = Modifier.padding(start = 15.dp).clickable { isTypeMenuExpanded = true }
-            )
-            Text(
-                text = itemType,
-                fontFamily = font_archivo_bold,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(start = 5.dp)
-            )
+            TopBar(navController = navController, "INVENTORY")
 
-            DropdownMenu(
-                expanded = isTypeMenuExpanded,
-                onDismissRequest = { isTypeMenuExpanded = false }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(0.98f)
+                    .height(70.dp)
+                    .padding(top = 20.dp)
+                    .clip(RoundedCornerShape(5.dp))
+                    .background(Color.White),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                DropdownMenuItem(
-                    text = { Text("All") },
-                    onClick = {
-                        itemType = "All"
-                        isTypeMenuExpanded = false
-                    }
+                Text(
+                    text = "All Items >",
+                    color = Color.Gray,
+                    fontFamily = font_abeezee,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    modifier = Modifier.padding(start = 15.dp).clickable { isTypeMenuExpanded = true }
                 )
-                productTypes.forEach { type ->
+                Text(
+                    text = itemType,
+                    fontFamily = font_archivo_bold,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(start = 5.dp)
+                )
+
+                DropdownMenu(
+                    expanded = isTypeMenuExpanded,
+                    onDismissRequest = { isTypeMenuExpanded = false }
+                ) {
                     DropdownMenuItem(
-                        text = { Text(type) },
+                        text = { Text("All") },
                         onClick = {
-                            itemType = type
+                            itemType = "All"
                             isTypeMenuExpanded = false
                         }
                     )
+                    productTypes.forEach { type ->
+                        DropdownMenuItem(
+                            text = { Text(type) },
+                            onClick = {
+                                itemType = type
+                                isTypeMenuExpanded = false
+                            }
+                        )
+                    }
+                }
+
+                if(isAdmin){
+                    HorizontalDivider(modifier = Modifier.fillMaxWidth(0.7f),color = Color.Transparent)
+
+                    Button(
+                        onClick = { showAddProductDialog = true },
+                        modifier = Modifier
+                            .padding(end = 10.dp)
+                            .fillMaxHeight(0.7f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ButtonGreen,
+                            contentColor = Color.White
+                        ),
+                        shape = RectangleShape
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add Product"
+                        )
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(0.98f)
+                    .fillMaxHeight(0.98f)
+                    .padding(top = 5.dp)
+                    .clip(RoundedCornerShape(5.dp))
+                    .background(Color.White)
+            ) {
+                TextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search products...") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .height(55.dp),
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = BlueStart,
+                        unfocusedIndicatorColor = dirtyWhite,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent
+                    )
+                )
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    items(
+                        items = filteredProducts,
+                        key = { it.productId }
+                    ) { product ->
+                        InventoryItem(
+                            name = product.productName,
+                            amount = product.normalPrice,
+                            quantity = product.stock,
+                            product = product
+                        )
+                        HorizontalDivider(
+                            thickness = 1.dp,
+                            color = dirtyWhite
+                        )
+                    }
                 }
             }
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth(0.98f)
-                .fillMaxHeight(0.98f)
-                .padding(top = 5.dp)
-                .clip(RoundedCornerShape(5.dp))
-                .background(Color.White)
-        ) {
-            TextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = { Text("Search products...") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .height(55.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedIndicatorColor = BlueStart,
-                    unfocusedIndicatorColor = dirtyWhite,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedContainerColor = Color.Transparent
-                )
+        if (showAddProductDialog) {
+            AddProductDialog(
+                onDismiss = { showAddProductDialog = false },
+                viewModel = productsViewModel
             )
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 16.dp)
-            ) {
-                items(
-                    items = filteredProducts,
-                    key = { it.productId }
-                ) { product ->
-                    InventoryItem(
-                        name = product.productName,
-                        amount = product.normalPrice,
-                        quantity = product.stock,
-                        product = product
-                    )
-                    HorizontalDivider(
-                        thickness = 1.dp,
-                        color = dirtyWhite
-                    )
-                }
-            }
         }
     }
 }
@@ -242,7 +289,7 @@ fun InventoryItem(
 
     val backgroundColor = when {
         quantity >= 50 -> ButtonGreen
-        quantity < 50 && amount >= 10 -> Orange
+        quantity < 50 && quantity >= 10 -> Orange
         else -> Red
     }
 
@@ -254,6 +301,7 @@ fun InventoryItem(
 
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var text by remember { mutableStateOf("") }
 
     val viewModel = LocalProductsViewModel.current
 
@@ -315,15 +363,15 @@ fun InventoryItem(
                     } else {
                         Box(
                             modifier = Modifier
-                                .size(65.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color.LightGray),
+                                .size(65.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "Loading...",
-                                color = Color.DarkGray,
-                                fontSize = 12.sp
+                            Image(
+                                painter = painterResource(id = R.drawable.image_area),
+                                contentDescription = name,
+                                modifier = Modifier
+                                    .size(65.dp)
+                                    .clip(RoundedCornerShape(10.dp))
                             )
                         }
                     }
@@ -402,7 +450,7 @@ fun InventoryItem(
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ){
-                            var text = if(quantity > 0) "IN STOCK" else "OUT OF STOCK"
+                            text = if(quantity > 50) "IN STOCK" else if(quantity < 50  && quantity > 0) "LOW ON STOCK" else "OUT OF STOCK"
                             Text(text = text, fontFamily = font_archivo_bold, fontSize = 11.sp)
                         }
                         Row(
@@ -594,6 +642,216 @@ fun EditProductDialog(
     }
 }
 
+@Composable
+fun AddProductDialog(
+    onDismiss: () -> Unit,
+    viewModel: ProductsViewModel
+) {
+    var name by remember { mutableStateOf("") }
+    var type by remember { mutableStateOf("") }
+    var normalPrice by remember { mutableStateOf("") }
+    var discountedPrice by remember { mutableStateOf("") }
+    var stock by remember { mutableStateOf("") }
+    var isHalfable by remember { mutableStateOf(false) }
+    var selectedImage by remember { mutableStateOf<Bitmap?>(null) }
+
+    val context = LocalContext.current
+
+    // Image Picker Launcher
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = result.data
+            val imageUri = data?.data
+            imageUri?.let {
+                try {
+                    // Get image from gallery and resize it
+                    val inputStream = context.contentResolver.openInputStream(it)
+                    val originalBitmap = BitmapFactory.decodeStream(inputStream)
+                    inputStream?.close()
+
+                    // Resize the bitmap to a reasonable size for storage and display
+                    // Target width of 300px while maintaining aspect ratio
+                    val targetWidth = 300
+                    val aspectRatio = originalBitmap.width.toFloat() / originalBitmap.height.toFloat()
+                    val targetHeight = (targetWidth / aspectRatio).toInt()
+
+                    val resizedBitmap = Bitmap.createScaledBitmap(
+                        originalBitmap,
+                        targetWidth,
+                        targetHeight,
+                        true
+                    )
+
+                    // Compress the bitmap to reduce storage size
+                    val outputStream = ByteArrayOutputStream()
+                    resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
+
+                    // Convert back to bitmap (this is now our optimized bitmap)
+                    val bytes = outputStream.toByteArray()
+                    selectedImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Add New Product",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // Image selection area
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.LightGray)
+                        .clickable {
+                            val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                            galleryLauncher.launch(intent)
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (selectedImage != null) {
+                        Image(
+                            bitmap = selectedImage!!.asImageBitmap(),
+                            contentDescription = "Product Image",
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add Image",
+                                tint = Color.Gray
+                            )
+                            Text(
+                                text = "Select Image",
+                                color = Color.Gray,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Product Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = type,
+                    onValueChange = { type = it },
+                    label = { Text("Type") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = normalPrice,
+                    onValueChange = { normalPrice = it },
+                    label = { Text("Normal Price") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = discountedPrice,
+                    onValueChange = { discountedPrice = it },
+                    label = { Text("Discounted Price") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = stock,
+                    onValueChange = { stock = it },
+                    label = { Text("Stock") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = isHalfable,
+                        onCheckedChange = { isHalfable = it }
+                    )
+                    Text("Can be sold in half")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                    ) {
+                        Text("Cancel")
+                    }
+
+                    Button(
+                        onClick = {
+                            val newProduct = Products(
+                                productName = name,
+                                type = type,
+                                normalPrice = normalPrice.toDoubleOrNull() ?: 0.0,
+                                discountedPrice = discountedPrice.toDoubleOrNull() ?: 0.0,
+                                stock = stock.toDoubleOrNull() ?: 0.0,
+                                productIcon = selectedImage,
+                                isHalfable = isHalfable
+                            )
+                            viewModel.insertProduct(newProduct)
+                            onDismiss()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = ButtonGreen),
+                        enabled = name.isNotBlank() && type.isNotBlank() &&
+                                normalPrice.isNotBlank() && stock.isNotBlank()
+                    ) {
+                        Text("Add Product")
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun DeleteProductDialog(

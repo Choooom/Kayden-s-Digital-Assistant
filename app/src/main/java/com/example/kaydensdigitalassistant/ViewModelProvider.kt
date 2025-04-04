@@ -34,8 +34,6 @@ val LocalEmployeeViewModel = compositionLocalOf<EmployeeDetailViewModel> { error
 val LocalAppViewModel = compositionLocalOf<AppViewModel> { error("No AppViewModel provided") }
 val LocalLocationViewModel = compositionLocalOf<LocationViewModel> { error("No LocationViewModel provided") }
 val LocalUserRoleViewModel = compositionLocalOf<UserRoleViewModel> { error("No UserRoleViewModel provided") }
-val LocalSyncViewModel = compositionLocalOf<SyncViewModel> { error("No SyncViewModel provided") }
-
 
 @Composable
 fun UserRoleProvider(content: @Composable () -> Unit) {
@@ -193,31 +191,3 @@ fun AppProvider(content: @Composable () -> Unit) {
         content()
     }
 }
-
-@Composable
-fun SyncProvider(content: @Composable () -> Unit) {
-    val context = LocalContext.current
-    val application = context.applicationContext as Application
-    val viewModel: SyncViewModel = viewModel(factory = SyncViewModelFactory(application))
-    ProvideSyncViewModel(viewModel) {
-        content()
-    }
-}
-
-@Composable
-fun ProvideSyncViewModel(viewModel: SyncViewModel, content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalSyncViewModel provides viewModel) {
-        content()
-    }
-}
-
-class SyncViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(SyncViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return SyncViewModel(application) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
-}
-

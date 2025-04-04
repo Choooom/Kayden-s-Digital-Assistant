@@ -335,7 +335,7 @@ fun InventoryItem(name: String, type: String, price:Double){
                     )
                 }else{
                     Image(
-                        painter = painterResource(id = R.drawable.image_area),
+                        painter = painterResource(id = R.drawable.unavailable),
                         contentDescription = name,
                         modifier = Modifier
                             .size(80.dp)

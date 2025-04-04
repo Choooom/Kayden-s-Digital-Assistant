@@ -62,12 +62,6 @@ interface SalesItemDao {
     @Query("SELECT * FROM sales_items WHERE salesId = :id")
     suspend fun getSalesById(id: Long): SalesItem?
 
-    @Query("SELECT * FROM sales_items WHERE lastModified > :timestamp AND isDeleted = 0")
-    suspend fun getSalesModifiedSince(timestamp: Long): List<SalesItem>
-
-    @Query("UPDATE sales_items SET isDeleted = 1, lastModified = :timestamp WHERE salesId = :id")
-    suspend fun markAsDeleted(id: Long, timestamp: Long = System.currentTimeMillis())
-
     @Query("""
     SELECT si.* FROM sales_items si
     INNER JOIN customer_details cd ON si.customerId = cd.customerId

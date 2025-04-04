@@ -44,10 +44,4 @@ interface ProductsDao {
 
     @Query("SELECT * FROM products WHERE productId = :id")
     suspend fun getProductById(id: Long): Products?
-
-    @Query("SELECT * FROM products WHERE lastModified > :timestamp AND isDeleted = 0")
-    suspend fun getProductsModifiedSince(timestamp: Long): List<Products>
-
-    @Query("UPDATE products SET isDeleted = 1, lastModified = :timestamp WHERE productId = :id")
-    suspend fun markAsDeleted(id: Long, timestamp: Long = System.currentTimeMillis())
 }

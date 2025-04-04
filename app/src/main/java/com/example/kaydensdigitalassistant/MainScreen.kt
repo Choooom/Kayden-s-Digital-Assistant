@@ -52,7 +52,7 @@ fun MainScreen() {
     val userRoleViewModel = LocalUserRoleViewModel.current
     val isAdmin by userRoleViewModel.isAdmin.collectAsState()
 
-        Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize()) {
             NavHost(navController = navController, startDestination = "login", modifier = Modifier.weight(1f)) {
 
                 composable("login") {
