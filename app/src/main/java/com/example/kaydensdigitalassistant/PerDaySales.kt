@@ -103,23 +103,7 @@ fun PerDaySale(navController: NavController) {
                     .padding(bottom = 50.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(0.2f)
-                ) {
-                    Text(
-                        text = "Stats", fontFamily = kanit_bold,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 30.sp,
-                        color = Color.White,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                    Icon(
-                        painterResource(id = R.drawable.face_man), contentDescription = "Profile",
-                        modifier = Modifier.size(70.dp).clickable { }.align(Alignment.CenterEnd)
-                    )
-                }
+                TopBar(navController = navController, "Stats")
 
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(start = 30.dp, top = 10.dp),

@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import org.apache.commons.math3.stat.descriptive.summary.Product
 import java.io.File
 import java.text.SimpleDateFormat
 import java.time.LocalDate
@@ -48,6 +49,9 @@ class SalesItemViewModel(private val repository: SalesItemRepository, private va
 
     private val _searchResults = MutableStateFlow<List<SalesItem>>(emptyList())
     val searchResults: StateFlow<List<SalesItem>> = _searchResults.asStateFlow()
+
+    val allProducts: LiveData<List<Products>> = productRepository.allProducts.asLiveData()
+    val allCustomers: LiveData<List<CustomerDetail>> = customerRepository.allCustomers.asLiveData()
 
     fun insertSalesItem(salesItem: SalesItem) = viewModelScope.launch {
         repository.insertSalesItem(salesItem)
@@ -581,6 +585,32 @@ class SalesItemViewModel(private val repository: SalesItemRepository, private va
         emit(productSales.sortedByDescending { it.totalSales })
     }
 
+    fun filterSalesByDateRange(startDate: String, endDate: String) = viewModelScope.launch {
+        repository.getSalesByDateRange(startDate, endDate).collect { salesItems ->
+            _selectedSalesItems.value = salesItems.sortedByDescending { it.dateDelivered }
+        }
+    }
+
+    // Export sales data for a date range to Excel
+    fun exportSalesDataRange(startDate: String, endDate: String, context: Context) {
+        viewModelScope.launch {
+            val sales = repository.getSalesByDateRange(startDate, endDate).first()
+            val customers = customerRepository.allCustomers.first().associateBy { it.customerId }
+            val products = productRepository.allProducts.first()
+
+            val exporter = ExcelExporter(context)
+            val file = exporter.exportSalesRangeToExcel(
+                sales = sales,
+                customers = customers,
+                products = products,
+                startDate = startDate,
+                endDate = endDate
+            )
+
+            shareExcelFile(context, file)
+        }
+    }
+
     class SalesItemViewModelFactory(
         private val repository: SalesItemRepository,
         private val customerRepository: CustomerRepository,
@@ -642,5 +672,9 @@ class SalesItemRepository(private val salesItemDao: SalesItemDao) {
 
     fun searchSales(query: String): Flow<List<SalesItem>> {
         return salesItemDao.searchSales(query)
+    }
+
+    fun getSalesByDateRange(startDate: String, endDate: String): Flow<List<SalesItem>> {
+        return salesItemDao.getSalesByDateRange(startDate, endDate)
     }
 }

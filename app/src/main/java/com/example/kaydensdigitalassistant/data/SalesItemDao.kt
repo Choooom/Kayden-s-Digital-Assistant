@@ -62,6 +62,9 @@ interface SalesItemDao {
     @Query("SELECT * FROM sales_items WHERE salesId = :id")
     suspend fun getSalesById(id: Long): SalesItem?
 
+    @Query("SELECT * FROM sales_items WHERE dateDelivered BETWEEN :startDate AND :endDate")
+    fun getSalesByDateRange(startDate: String, endDate: String): Flow<List<SalesItem>>
+
     @Query("""
     SELECT si.* FROM sales_items si
     INNER JOIN customer_details cd ON si.customerId = cd.customerId

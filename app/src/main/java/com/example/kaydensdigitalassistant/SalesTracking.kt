@@ -1,5 +1,6 @@
 package com.example.kaydensdigitalassistant
 
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -100,6 +101,8 @@ fun SalesTracking(navController: NavController) {
 
     var showDatePicker by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
+    var showDateRangePicker: Boolean by remember { mutableStateOf(false) }
 
     LaunchedEffect(isFirstLoad) {
         val todayDate = getCurrentDate() // Get today's date
@@ -299,7 +302,7 @@ fun SalesTracking(navController: NavController) {
                     color = BlueStart,
                     shape = CircleShape
                 )
-                .size(56.dp)  // Standard FAB size
+                .size(56.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Share,

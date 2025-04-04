@@ -114,25 +114,11 @@ fun ManageAccount(navController: NavController){
     }
 
 
-    Box(modifier = Modifier.fillMaxWidth().fillMaxHeight().padding(top = insets.calculateTopPadding()).background(Brush.horizontalGradient(
+    Column(modifier = Modifier.fillMaxWidth().fillMaxHeight().padding(top = insets.calculateTopPadding()).background(Brush.horizontalGradient(
         colors = listOf(BlueStart, BlueEnd)
-    )), contentAlignment = Alignment.TopCenter){
-        Box(modifier = Modifier.fillMaxWidth()){
-            Text(
-                text = title,
-                fontFamily = kanit_bold,
-                fontWeight = FontWeight.Bold,
-                fontSize = 30.sp,
-                color = Color.White,
-                modifier = Modifier.align(Alignment.Center)
-            )
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = "Profile",
-                modifier = Modifier.size(40.dp).align(Alignment.CenterEnd)
-            )
-        }
-        Column(modifier = Modifier.fillMaxWidth(0.9f).fillMaxHeight(0.9f).padding(top = 100.dp).clip(RoundedCornerShape(20.dp)).background(Color.White),
+    )), horizontalAlignment = Alignment.CenterHorizontally){
+        TopBar(navController = navController, title)
+        Column(modifier = Modifier.fillMaxWidth(0.95f).fillMaxHeight(0.95f).padding(top = 20.dp).clip(RoundedCornerShape(20.dp)).background(Color.White),
             verticalArrangement = Arrangement.Top, horizontalAlignment = Alignment.CenterHorizontally) {
             Row(modifier = Modifier.fillMaxWidth().padding(top = 10.dp)) {
                 Row(
